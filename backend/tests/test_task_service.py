@@ -1,6 +1,4 @@
-"""
-Tests for Task Service.
-"""
+"""Tests for Task Service."""
 from datetime import datetime, timezone, timedelta
 
 import pytest
@@ -36,6 +34,15 @@ class TestGetTasks:
         assert tasks[0].id == sample_task.id
 
     @pytest.mark.asyncio
+    async def test_get_tasks_returns_all_tasks(
+        self, db_session: AsyncSession, multiple_tasks: list[Task]
+    ):
+        """Test that get_tasks returns all tasks."""
+        tasks, total = await task_service.get_tasks(db_session)
+        assert total == 5
+        assert len(tasks) == 5
+
+    @pytest.mark.asyncio
     async def test_get_tasks_pagination(
         self, db_session: AsyncSession, sample_contact: Contact
     ):
@@ -50,7 +57,7 @@ class TestGetTasks:
             )
             db_session.add(task)
         await db_session.flush()
-        
+
         # Get first page (3 items)
         tasks, total = await task_service.get_tasks(db_session, skip=0, limit=3)
         assert len(tasks) == 3
@@ -76,12 +83,24 @@ class TestGetTasks:
             )
             db_session.add(task)
         await db_session.flush()
-        
+
         tasks, total = await task_service.get_tasks(
             db_session, status=TaskStatus.OPEN
         )
         assert total == 1
         assert tasks[0].status == TaskStatus.OPEN
+
+    @pytest.mark.asyncio
+    async def test_get_tasks_filter_by_priority(
+        self, db_session: AsyncSession, multiple_tasks: list[Task]
+    ):
+        """Test filtering tasks by priority."""
+        tasks, total = await task_service.get_tasks(
+            db_session, priority=TaskPriority.URGENT
+        )
+        assert total == 1
+        assert tasks[0].priority == TaskPriority.URGENT
+        assert tasks[0].title == "Dringende Aufgabe"
 
     @pytest.mark.asyncio
     async def test_get_tasks_filter_by_assigned_to(
@@ -99,7 +118,7 @@ class TestGetTasks:
             )
             db_session.add(task)
         await db_session.flush()
-        
+
         tasks, total = await task_service.get_tasks(
             db_session, assigned_to="user1"
         )
@@ -126,7 +145,7 @@ class TestGetTasks:
         db_session.add(task1)
         db_session.add(task2)
         await db_session.flush()
-        
+
         tasks, total = await task_service.get_tasks(
             db_session, contact_id=sample_contact.id
         )
@@ -143,6 +162,18 @@ class TestGetTasks:
         )
         assert total == 1
         assert tasks[0].id == sample_overdue_task.id
+
+    @pytest.mark.asyncio
+    async def test_get_tasks_filter_deferred_status(
+        self, db_session: AsyncSession, multiple_tasks: list[Task]
+    ):
+        """Test filtering tasks by deferred status."""
+        tasks, total = await task_service.get_tasks(
+            db_session, status=TaskStatus.DEFERRED
+        )
+        assert total == 1
+        assert tasks[0].title == "Verschobene Aufgabe"
+        assert tasks[0].status == TaskStatus.DEFERRED
 
 
 class TestGetMyTasks:
@@ -164,11 +195,22 @@ class TestGetMyTasks:
             )
             db_session.add(task)
         await db_session.flush()
-        
+
         tasks, total = await task_service.get_my_tasks(
             db_session, assigned_to="current_user"
         )
         assert total == 2
+
+    @pytest.mark.asyncio
+    async def test_get_my_tasks_with_multiple_tasks(
+        self, db_session: AsyncSession, multiple_tasks: list[Task]
+    ):
+        """Test getting tasks for a specific user with multiple tasks fixture."""
+        tasks, total = await task_service.get_my_tasks(
+            db_session, assigned_to="user1"
+        )
+        assert total == 2
+        assert all(t.assigned_to == "user1" for t in tasks)
 
 
 class TestGetTask:
@@ -190,6 +232,16 @@ class TestGetTask:
         task = await task_service.get_task(db_session, 99999)
         assert task is None
 
+    @pytest.mark.asyncio
+    async def test_get_task_includes_contact(
+        self, db_session: AsyncSession, sample_task: Task
+    ):
+        """Test that get_task includes contact relationship."""
+        task = await task_service.get_task(db_session, sample_task.id)
+        assert task is not None
+        assert task.contact is not None
+        assert task.contact.first_name == "Max"
+
 
 class TestCreateTask:
     """Tests for create_task function."""
@@ -201,7 +253,7 @@ class TestCreateTask:
             title="Neue Aufgabe",
         )
         task = await task_service.create_task(db_session, task_data)
-        
+
         assert task.id is not None
         assert task.title == "Neue Aufgabe"
         assert task.status == TaskStatus.OPEN
@@ -225,7 +277,7 @@ class TestCreateTask:
         task = await task_service.create_task(
             db_session, task_data, created_by="creator_user"
         )
-        
+
         assert task.id is not None
         assert task.title == "Vollständige Aufgabe"
         assert task.description == "Beschreibung der Aufgabe"
@@ -248,7 +300,7 @@ class TestCreateTask:
             db_session, task_data, created_by="test_user"
         )
         await db_session.commit()
-        
+
         # Check history entry was created
         result = await db_session.execute(
             select(ContactHistory).where(
@@ -259,6 +311,17 @@ class TestCreateTask:
         history = result.scalar_one_or_none()
         assert history is not None
         assert "Aufgabe erstellt" in history.title
+
+    @pytest.mark.asyncio
+    async def test_create_task_default_values(self, db_session: AsyncSession):
+        """Test that task creation uses correct default values."""
+        task_data = TaskCreate(title="Minimale Aufgabe")
+        task = await task_service.create_task(db_session, task_data)
+
+        assert task.status == TaskStatus.OPEN
+        assert task.priority == TaskPriority.MEDIUM
+        assert task.description is None
+        assert task.due_date is None
 
 
 class TestUpdateTask:
@@ -274,7 +337,7 @@ class TestUpdateTask:
             status=TaskStatus.IN_PROGRESS,
         )
         task = await task_service.update_task(db_session, sample_task.id, update_data)
-        
+
         assert task is not None
         assert task.title == "Aktualisierter Titel"
         assert task.status == TaskStatus.IN_PROGRESS
@@ -287,16 +350,40 @@ class TestUpdateTask:
         assert task is None
 
     @pytest.mark.asyncio
+    async def test_update_task_to_deferred(
+        self, db_session: AsyncSession, sample_task: Task
+    ):
+        """Test updating task status to deferred."""
+        update_data = TaskUpdate(status=TaskStatus.DEFERRED)
+        task = await task_service.update_task(db_session, sample_task.id, update_data)
+
+        assert task is not None
+        assert task.status == TaskStatus.DEFERRED
+
+    @pytest.mark.asyncio
+    async def test_update_task_priority(
+        self, db_session: AsyncSession, sample_task: Task
+    ):
+        """Test updating task priority."""
+        update_data = TaskUpdate(priority=TaskPriority.URGENT)
+        task = await task_service.update_task(db_session, sample_task.id, update_data)
+
+        assert task is not None
+        assert task.priority == TaskPriority.URGENT
+
+    @pytest.mark.asyncio
     async def test_update_task_partial(
         self, db_session: AsyncSession, sample_task: Task
     ):
         """Test partial update (only specified fields)."""
         original_title = sample_task.title
+        original_description = sample_task.description
         update_data = TaskUpdate(priority=TaskPriority.URGENT)
-        
+
         task = await task_service.update_task(db_session, sample_task.id, update_data)
-        
+
         assert task.title == original_title  # Unchanged
+        assert task.description == original_description  # Unchanged
         assert task.priority == TaskPriority.URGENT
 
 
@@ -314,10 +401,10 @@ class TestCompleteTask:
         result = await task_service.complete_task(
             db_session, sample_task.id, complete_data, completed_by="test_user"
         )
-        
+
         assert result is not None
         task, follow_up = result
-        
+
         assert task.status == TaskStatus.COMPLETED
         assert task.completed_at is not None
         assert "Abschlussnotiz" in task.description
@@ -339,10 +426,10 @@ class TestCompleteTask:
         result = await task_service.complete_task(
             db_session, sample_task.id, complete_data, completed_by="test_user"
         )
-        
+
         assert result is not None
         task, follow_up = result
-        
+
         assert task.status == TaskStatus.COMPLETED
         assert follow_up is not None
         assert follow_up.title == "Angebot nachfassen"
@@ -367,15 +454,34 @@ class TestCompleteTask:
     ):
         """Test that completion notes are appended to existing description."""
         original_description = sample_task.description
-        
+
         complete_data = TaskComplete(notes="Zusätzliche Notiz")
         result = await task_service.complete_task(
             db_session, sample_task.id, complete_data
         )
-        
+
         task, _ = result
         assert original_description in task.description
         assert "Zusätzliche Notiz" in task.description
+
+    @pytest.mark.asyncio
+    async def test_complete_task_follow_up_inherits_contact(
+        self, db_session: AsyncSession, sample_task: Task
+    ):
+        """Test that follow-up task inherits contact from parent."""
+        complete_data = TaskComplete(
+            create_follow_up=True,
+            follow_up_title="Nachverfolgung",
+        )
+
+        result = await task_service.complete_task(
+            db_session, sample_task.id, complete_data
+        )
+
+        assert result is not None
+        _, follow_up = result
+        assert follow_up is not None
+        assert follow_up.contact_id == sample_task.contact_id
 
 
 class TestDeleteTask:
@@ -388,12 +494,12 @@ class TestDeleteTask:
         """Test deleting a task."""
         task_id = sample_task.id
         result = await task_service.delete_task(db_session, task_id)
-        
+
         assert result is True
-        
+
         # Flush to persist the deletion
         await db_session.flush()
-        
+
         # Task should no longer exist
         task = await task_service.get_task(db_session, task_id)
         assert task is None
@@ -414,7 +520,7 @@ class TestTaskOrdering:
     ):
         """Test that tasks are ordered by due_date (asc) and priority (desc)."""
         now = datetime.now(timezone.utc)
-        
+
         # Create tasks with different due dates and priorities
         task1 = Task(
             title="Task Due Tomorrow High",
@@ -437,12 +543,12 @@ class TestTaskOrdering:
             status=TaskStatus.OPEN,
             contact_id=sample_contact.id,
         )
-        
+
         db_session.add_all([task1, task2, task3])
         await db_session.flush()
-        
+
         tasks, _ = await task_service.get_tasks(db_session)
-        
+
         # Due today should come first (earliest due_date)
         assert tasks[0].title == "Task Due Today Low"
         # Due tomorrow should come second

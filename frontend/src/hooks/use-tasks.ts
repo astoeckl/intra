@@ -5,6 +5,7 @@ import type {
   TaskListItem,
   TaskCreate,
   TaskStatus,
+  TaskPriority,
   PaginatedResponse,
 } from '@/lib/types'
 
@@ -12,6 +13,7 @@ interface TasksParams {
   page?: number
   page_size?: number
   status?: TaskStatus
+  priority?: TaskPriority
   assigned_to?: string
   contact_id?: number
   is_overdue?: boolean

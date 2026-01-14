@@ -40,6 +40,7 @@ TestSessionLocal = async_sessionmaker(
 
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
+    """Create an instance of the default event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
@@ -47,33 +48,37 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 @pytest_asyncio.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Create a fresh database session for each test."""
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async with TestSessionLocal() as session:
         yield session
         await session.rollback()
-    
+
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest_asyncio.fixture(scope="function")
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Create an async HTTP client for testing API endpoints."""
+
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
-    
+
     app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture
 async def sample_company(db_session: AsyncSession) -> Company:
+    """Create a sample company for testing."""
     company = Company(
         name="Test GmbH",
         street="Teststraße 1",
@@ -95,6 +100,7 @@ async def sample_company(db_session: AsyncSession) -> Company:
 
 @pytest_asyncio.fixture
 async def sample_contact(db_session: AsyncSession, sample_company: Company) -> Contact:
+    """Create a sample contact for testing."""
     contact = Contact(
         first_name="Max",
         last_name="Mustermann",
@@ -117,6 +123,7 @@ async def sample_contact(db_session: AsyncSession, sample_company: Company) -> C
 
 @pytest_asyncio.fixture
 async def sample_contact_no_company(db_session: AsyncSession) -> Contact:
+    """Create a sample contact without a company for testing."""
     contact = Contact(
         first_name="Erika",
         last_name="Musterfrau",
@@ -132,6 +139,7 @@ async def sample_contact_no_company(db_session: AsyncSession) -> Contact:
 
 @pytest_asyncio.fixture
 async def sample_campaign(db_session: AsyncSession) -> Campaign:
+    """Create a sample campaign for testing."""
     campaign = Campaign(
         name="Winter Kampagne 2026",
         description="Testkampagne für Q1",
@@ -150,6 +158,7 @@ async def sample_campaign(db_session: AsyncSession) -> Campaign:
 async def sample_lead(
     db_session: AsyncSession, sample_contact: Contact, sample_campaign: Campaign
 ) -> Lead:
+    """Create a sample lead for testing."""
     lead = Lead(
         status=LeadStatus.COLD,
         source="landing_page",
@@ -167,6 +176,7 @@ async def sample_lead(
 
 @pytest_asyncio.fixture
 async def sample_task(db_session: AsyncSession, sample_contact: Contact) -> Task:
+    """Create a sample task for testing."""
     task = Task(
         title="Rückruf vereinbaren",
         description="Kontakt anrufen wegen Angebot",
@@ -185,6 +195,7 @@ async def sample_task(db_session: AsyncSession, sample_contact: Contact) -> Task
 
 @pytest_asyncio.fixture
 async def sample_overdue_task(db_session: AsyncSession, sample_contact: Contact) -> Task:
+    """Create a sample overdue task for testing."""
     task = Task(
         title="Überfällige Aufgabe",
         description="Diese Aufgabe ist überfällig",
@@ -203,6 +214,7 @@ async def sample_overdue_task(db_session: AsyncSession, sample_contact: Contact)
 
 @pytest_asyncio.fixture
 async def sample_history_note(db_session: AsyncSession, sample_contact: Contact) -> ContactHistory:
+    """Create a sample history note for testing."""
     history = ContactHistory(
         contact_id=sample_contact.id,
         type=HistoryType.NOTE,
@@ -218,6 +230,7 @@ async def sample_history_note(db_session: AsyncSession, sample_contact: Contact)
 
 @pytest_asyncio.fixture
 async def sample_history_call(db_session: AsyncSession, sample_contact: Contact) -> ContactHistory:
+    """Create a sample history call entry for testing."""
     import json
     history = ContactHistory(
         contact_id=sample_contact.id,
@@ -235,6 +248,7 @@ async def sample_history_call(db_session: AsyncSession, sample_contact: Contact)
 
 @pytest_asyncio.fixture
 async def multiple_contacts(db_session: AsyncSession, sample_company: Company) -> list[Contact]:
+    """Create multiple contacts for testing."""
     contacts = [
         Contact(
             first_name="Anna",
@@ -282,9 +296,10 @@ async def multiple_contacts(db_session: AsyncSession, sample_company: Company) -
 async def multiple_leads(
     db_session: AsyncSession, multiple_contacts: list[Contact], sample_campaign: Campaign
 ) -> list[Lead]:
+    """Create multiple leads for testing."""
     leads = []
     statuses = [LeadStatus.COLD, LeadStatus.WARM, LeadStatus.HOT, LeadStatus.COLD, LeadStatus.TO_BE_DONE]
-    
+
     for i, (contact, status) in enumerate(zip(multiple_contacts, statuses)):
         lead = Lead(
             status=status,
@@ -294,8 +309,60 @@ async def multiple_leads(
         )
         db_session.add(lead)
         leads.append(lead)
-    
+
     await db_session.flush()
     for lead in leads:
         await db_session.refresh(lead)
     return leads
+
+
+@pytest_asyncio.fixture
+async def multiple_tasks(db_session: AsyncSession, sample_contact: Contact) -> list[Task]:
+    """Create multiple tasks with different statuses and priorities for testing."""
+    now = datetime.now(timezone.utc)
+    tasks = [
+        Task(
+            title="Dringende Aufgabe",
+            status=TaskStatus.OPEN,
+            priority=TaskPriority.URGENT,
+            due_date=now - timedelta(days=4),  # Overdue
+            contact_id=sample_contact.id,
+            assigned_to="user1",
+        ),
+        Task(
+            title="Hohe Priorität Aufgabe",
+            status=TaskStatus.IN_PROGRESS,
+            priority=TaskPriority.HIGH,
+            due_date=now + timedelta(days=1),
+            contact_id=sample_contact.id,
+            assigned_to="user1",
+        ),
+        Task(
+            title="Verschobene Aufgabe",
+            status=TaskStatus.DEFERRED,
+            priority=TaskPriority.LOW,
+            assigned_to="user2",
+        ),
+        Task(
+            title="Erledigte Aufgabe",
+            status=TaskStatus.COMPLETED,
+            priority=TaskPriority.MEDIUM,
+            completed_at=now - timedelta(days=9),
+        ),
+        Task(
+            title="Aufgabe ohne Kontakt",
+            status=TaskStatus.OPEN,
+            priority=TaskPriority.MEDIUM,
+            assigned_to="user3",
+        ),
+    ]
+
+    for task in tasks:
+        db_session.add(task)
+
+    await db_session.flush()
+
+    for task in tasks:
+        await db_session.refresh(task)
+
+    return tasks

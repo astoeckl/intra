@@ -15,6 +15,7 @@ async def get_tasks(
     skip: int = 0,
     limit: int = 20,
     status: Optional[TaskStatus] = None,
+    priority: Optional[TaskPriority] = None,
     assigned_to: Optional[str] = None,
     contact_id: Optional[int] = None,
     is_overdue: Optional[bool] = None,
@@ -22,10 +23,12 @@ async def get_tasks(
     """Get all tasks with pagination and filters."""
     query = select(Task).options(selectinload(Task.contact))
     count_query = select(func.count(Task.id))
-    
+
     filters = []
     if status:
         filters.append(Task.status == status)
+    if priority:
+        filters.append(Task.priority == priority)
     if assigned_to:
         filters.append(Task.assigned_to == assigned_to)
     if contact_id:
@@ -36,19 +39,19 @@ async def get_tasks(
             Task.due_date < now,
             Task.status.in_([TaskStatus.OPEN, TaskStatus.IN_PROGRESS])
         ))
-    
+
     if filters:
         query = query.where(*filters)
         count_query = count_query.where(*filters)
-    
+
     query = query.order_by(Task.due_date.asc().nullslast(), Task.priority.desc()).offset(skip).limit(limit)
-    
+
     result = await db.execute(query)
     tasks = result.scalars().all()
-    
+
     count_result = await db.execute(count_query)
     total = count_result.scalar() or 0
-    
+
     return tasks, total
 
 
@@ -81,7 +84,7 @@ async def create_task(
     task = Task(**task_data.model_dump(), created_by=created_by)
     db.add(task)
     await db.flush()
-    
+
     # Create history entry if contact is associated
     if task.contact_id:
         history = ContactHistory(
@@ -92,9 +95,9 @@ async def create_task(
             created_by=created_by,
         )
         db.add(history)
-    
+
     await db.flush()
-    
+
     # Re-fetch the task with contact relationship loaded
     result = await get_task(db, task.id)
     # Should never be None since we just created it
@@ -111,11 +114,11 @@ async def update_task(
     task = await get_task(db, task_id)
     if not task:
         return None
-    
+
     update_data = task_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(task, field, value)
-    
+
     await db.flush()
     await db.refresh(task)
     return task
@@ -131,20 +134,20 @@ async def complete_task(
     task = await get_task(db, task_id)
     if not task:
         return None
-    
+
     # Mark task as completed
     task.status = TaskStatus.COMPLETED
     task.completed_at = datetime.now(timezone.utc)
-    
+
     # Add completion notes to task description
     if complete_data.notes:
         if task.description:
             task.description += f"\n\nAbschlussnotiz: {complete_data.notes}"
         else:
             task.description = f"Abschlussnotiz: {complete_data.notes}"
-    
+
     follow_up_task = None
-    
+
     # Create follow-up task if requested
     if complete_data.create_follow_up and complete_data.follow_up_title:
         follow_up_task = Task(
@@ -158,12 +161,12 @@ async def complete_task(
             status=TaskStatus.OPEN,
         )
         db.add(follow_up_task)
-    
+
     await db.flush()
     await db.refresh(task)
     if follow_up_task:
         await db.refresh(follow_up_task)
-    
+
     return task, follow_up_task
 
 
@@ -172,7 +175,7 @@ async def delete_task(db: AsyncSession, task_id: int) -> bool:
     task = await get_task(db, task_id)
     if not task:
         return False
-    
+
     await db.delete(task)
     await db.flush()
     return True
