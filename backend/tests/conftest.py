@@ -7,9 +7,9 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
-from httpx import AsyncClient, ASGITransport
 
 from src.core.database import Base, get_db
 from src.main import app

@@ -1,9 +1,6 @@
 """Integration tests for Settings API endpoints."""
 import pytest
 import uuid
-from httpx import AsyncClient, ASGITransport
-
-from src.main import app
 
 
 def unique_id():
@@ -16,14 +13,7 @@ def anyio_backend():
     return "asyncio"
 
 
-@pytest.fixture
-async def client():
-    """Create test client."""
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
-    ) as ac:
-        yield ac
+# client fixture is provided by conftest.py
 
 
 class TestSettingsAPI:
