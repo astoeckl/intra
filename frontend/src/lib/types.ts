@@ -239,3 +239,55 @@ export interface EmailTemplate {
   created_at: string
   updated_at: string
 }
+
+// Setting types
+export type SettingValueType = 'string' | 'number' | 'boolean' | 'json'
+
+export interface Setting {
+  id: number
+  key: string
+  category: string
+  value?: string
+  value_type: SettingValueType
+  created_at: string
+  updated_at: string
+}
+
+export interface SettingCreate {
+  key: string
+  category: string
+  value?: string
+  value_type?: SettingValueType
+}
+
+export interface SettingUpdate {
+  value?: string
+  value_type?: SettingValueType
+}
+
+// Lookup Value types
+export interface LookupValue {
+  id: number
+  category: string
+  value: string
+  label: string
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface LookupValueCreate {
+  category: string
+  value: string
+  label: string
+  sort_order?: number
+  is_active?: boolean
+}
+
+export interface LookupValueUpdate {
+  value?: string
+  label?: string
+  sort_order?: number
+  is_active?: boolean
+}

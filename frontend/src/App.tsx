@@ -6,6 +6,7 @@ import Contacts from '@/pages/Contacts'
 import Leads from '@/pages/Leads'
 import Tasks from '@/pages/Tasks'
 import Callcenter from '@/pages/Callcenter'
+import Settings from '@/pages/Settings'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="contacts" element={<Contacts />} />
           <Route path="leads" element={<Leads />} />
           <Route path="tasks" element={<Tasks />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
       <Toaster position="top-right" />

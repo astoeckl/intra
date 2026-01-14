@@ -6,6 +6,7 @@ from src.services import lead_service
 from src.services import task_service
 from src.services import history_service
 from src.services import email_service
+from src.services import setting_service
 
 __all__ = [
     "company_service",
@@ -15,4 +16,5 @@ __all__ = [
     "task_service",
     "history_service",
     "email_service",
+    "setting_service",
 ]

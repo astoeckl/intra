@@ -10,6 +10,7 @@ from src.api.routes import (
     contact_history,
     email_templates,
     public,
+    settings,
 )
 
 api_router = APIRouter()
@@ -24,3 +25,4 @@ api_router.include_router(leads.router, prefix="/leads", tags=["Leads"])
 api_router.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 api_router.include_router(email_templates.router, prefix="/email-templates", tags=["Email Templates"])
 api_router.include_router(public.router, prefix="/public", tags=["Public"])
+api_router.include_router(settings.router, prefix="/settings", tags=["Settings"])

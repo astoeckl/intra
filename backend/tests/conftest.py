@@ -19,6 +19,7 @@ from src.models.lead import Lead, LeadStatus
 from src.models.campaign import Campaign
 from src.models.task import Task, TaskStatus, TaskPriority
 from src.models.contact_history import ContactHistory, HistoryType
+from src.models import Setting, LookupValue  # noqa: F401 - needed for metadata
 
 
 # Use in-memory SQLite for testing
