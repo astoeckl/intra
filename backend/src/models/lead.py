@@ -12,30 +12,27 @@ if TYPE_CHECKING:
 
 
 class LeadStatus(str, enum.Enum):
-    """Lead status enum."""
-    NEW = "new"
-    CONTACTED = "contacted"
-    QUALIFIED = "qualified"
-    CONVERTED = "converted"
+    COLD = "cold"
+    WARM = "warm"
+    HOT = "hot"
+    TO_BE_DONE = "to_be_done"
     DISQUALIFIED = "disqualified"
 
 
 class Lead(Base, TimestampMixin):
-    """Lead model."""
-    
     __tablename__ = "leads"
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     status: Mapped[LeadStatus] = mapped_column(
-        Enum(LeadStatus), default=LeadStatus.NEW, nullable=False, index=True
+        Enum(LeadStatus, values_callable=lambda x: [e.value for e in x]),
+        default=LeadStatus.COLD, nullable=False, index=True
     )
-    source: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # landing_page, manual, import
+    source: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     utm_source: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     utm_medium: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     utm_campaign: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
-    # Foreign Keys
     contact_id: Mapped[int] = mapped_column(
         ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -43,7 +40,6 @@ class Lead(Base, TimestampMixin):
         ForeignKey("campaigns.id", ondelete="SET NULL"), nullable=True
     )
     
-    # Relationships
     contact: Mapped["Contact"] = relationship("Contact", back_populates="leads")
     campaign: Mapped[Optional["Campaign"]] = relationship("Campaign", back_populates="leads")
     

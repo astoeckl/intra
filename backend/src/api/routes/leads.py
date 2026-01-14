@@ -25,7 +25,6 @@ async def list_leads(
     campaign_id: int = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all leads with pagination and filters."""
     skip = (page - 1) * page_size
     leads, total = await lead_service.get_leads(
         db, skip=skip, limit=page_size, status=status, campaign_id=campaign_id
@@ -33,8 +32,9 @@ async def list_leads(
     
     items = []
     for lead in leads:
-        contact_name = f"{lead.contact.first_name} {lead.contact.last_name}" if lead.contact else "N/A"
-        company_name = lead.contact.company.name if lead.contact and lead.contact.company else None
+        contact = lead.contact
+        contact_name = f"{contact.first_name} {contact.last_name}" if contact else "N/A"
+        company_name = contact.company.name if contact and contact.company else None
         
         item = LeadListResponse(
             id=lead.id,
@@ -42,7 +42,10 @@ async def list_leads(
             source=lead.source,
             contact_id=lead.contact_id,
             contact_name=contact_name,
-            contact_email=lead.contact.email if lead.contact else None,
+            contact_email=contact.email if contact else None,
+            contact_phone=contact.phone if contact else None,
+            contact_mobile=contact.mobile if contact else None,
+            contact_position=contact.position if contact else None,
             company_name=company_name,
             campaign_id=lead.campaign_id,
             campaign_name=lead.campaign.name if lead.campaign else None,
@@ -65,7 +68,6 @@ async def get_lead(
     lead_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single lead by ID."""
     lead = await lead_service.get_lead(db, lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
@@ -77,7 +79,6 @@ async def create_lead(
     lead_data: LeadCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new lead."""
     lead = await lead_service.create_lead(db, lead_data)
     return LeadResponse.model_validate(lead)
 
@@ -88,7 +89,6 @@ async def update_lead(
     lead_data: LeadUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update an existing lead."""
     lead = await lead_service.update_lead(db, lead_id, lead_data)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
@@ -101,9 +101,8 @@ async def import_leads(
     campaign_id: int = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Import leads from Excel or CSV file."""
     if not file.filename:
-        raise HTTPException(status_code=400, detail="Keine Datei hochgeladen")
+        raise HTTPException(status_code=400, detail="No file uploaded")
     
     content = await file.read()
     result = await lead_service.import_leads_from_file(

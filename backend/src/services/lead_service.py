@@ -21,7 +21,6 @@ async def get_leads(
     status: Optional[LeadStatus] = None,
     campaign_id: Optional[int] = None,
 ) -> tuple[Sequence[Lead], int]:
-    """Get all leads with pagination and filters."""
     query = (
         select(Lead)
         .options(
@@ -53,7 +52,6 @@ async def get_leads(
 
 
 async def get_lead(db: AsyncSession, lead_id: int) -> Optional[Lead]:
-    """Get a single lead by ID."""
     result = await db.execute(
         select(Lead)
         .options(
@@ -66,29 +64,25 @@ async def get_lead(db: AsyncSession, lead_id: int) -> Optional[Lead]:
 
 
 async def create_lead(db: AsyncSession, lead_data: LeadCreate) -> Lead:
-    """Create a new lead."""
     lead = Lead(**lead_data.model_dump())
     db.add(lead)
     await db.flush()
     
-    # Create history entry
     history = ContactHistory(
         contact_id=lead.contact_id,
         type=HistoryType.LEAD_CREATED,
-        title="Lead erstellt",
-        content=f"Neuer Lead aus Quelle: {lead.source or 'Unbekannt'}",
+        title="Lead created",
+        content=f"New lead from source: {lead.source or 'unknown'}",
     )
     db.add(history)
     
-    await db.refresh(lead)
-    return lead
+    await db.flush()
+    return await get_lead(db, lead.id)
 
 
 async def create_lead_from_form(
     db: AsyncSession, form_data: LeadCreateFromForm
 ) -> Lead:
-    """Create a lead from landing page form submission."""
-    # Get or create company
     company_id = None
     if form_data.company_name:
         company = await company_service.get_company_by_name(db, form_data.company_name)
@@ -99,8 +93,7 @@ async def create_lead_from_form(
             )
         company_id = company.id
     
-    # Get or create contact
-    contact, is_new = await contact_service.get_or_create_contact_by_email(
+    contact, _ = await contact_service.get_or_create_contact_by_email(
         db,
         email=form_data.email,
         first_name=form_data.first_name,
@@ -109,7 +102,6 @@ async def create_lead_from_form(
         company_id=company_id,
     )
     
-    # Create lead
     lead = Lead(
         contact_id=contact.id,
         campaign_id=form_data.campaign_id,
@@ -117,17 +109,16 @@ async def create_lead_from_form(
         utm_source=form_data.utm_source,
         utm_medium=form_data.utm_medium,
         utm_campaign=form_data.utm_campaign,
-        status=LeadStatus.NEW,
+        status=LeadStatus.COLD,
     )
     db.add(lead)
     await db.flush()
     
-    # Create history entry
     history = ContactHistory(
         contact_id=contact.id,
         type=HistoryType.LEAD_CREATED,
-        title="Lead über Landing Page erstellt",
-        content=f"Neuer Lead über Formular erfasst",
+        title="Lead from landing page",
+        content="New lead captured via form submission",
     )
     db.add(history)
     
@@ -138,7 +129,6 @@ async def create_lead_from_form(
 async def update_lead(
     db: AsyncSession, lead_id: int, lead_data: LeadUpdate
 ) -> Optional[Lead]:
-    """Update an existing lead."""
     lead = await get_lead(db, lead_id)
     if not lead:
         return None
@@ -148,13 +138,12 @@ async def update_lead(
     for field, value in update_data.items():
         setattr(lead, field, value)
     
-    # Create history entry for status change
     if "status" in update_data and old_status != lead.status:
         history = ContactHistory(
             contact_id=lead.contact_id,
             type=HistoryType.STATUS_CHANGE,
-            title="Lead-Status geändert",
-            content=f"Status von '{old_status.value}' zu '{lead.status.value}' geändert",
+            title="Lead status changed",
+            content=f"Status changed from '{old_status.value}' to '{lead.status.value}'",
         )
         db.add(history)
     
@@ -166,59 +155,49 @@ async def update_lead(
 async def import_leads_from_file(
     db: AsyncSession, file_content: bytes, filename: str, campaign_id: Optional[int] = None
 ) -> LeadImportResult:
-    """Import leads from Excel or CSV file."""
     errors: list[str] = []
     imported = 0
     
     try:
-        # Read file based on extension
         if filename.endswith(".csv"):
             df = pd.read_csv(BytesIO(file_content))
         elif filename.endswith((".xlsx", ".xls")):
             df = pd.read_excel(BytesIO(file_content))
         else:
             return LeadImportResult(
-                total_rows=0,
-                imported=0,
-                failed=0,
-                errors=["Ungültiges Dateiformat. Erlaubt: CSV, XLSX, XLS"],
+                total_rows=0, imported=0, failed=0,
+                errors=["Invalid file format. Allowed: CSV, XLSX, XLS"],
             )
         
         total_rows = len(df)
-        
-        # Expected columns (case-insensitive)
         df.columns = df.columns.str.lower().str.strip()
         
-        required_columns = ["vorname", "nachname"]
-        for col in required_columns:
-            if col not in df.columns:
-                # Try English column names
-                if col == "vorname" and "first_name" in df.columns:
-                    df = df.rename(columns={"first_name": "vorname"})
-                elif col == "nachname" and "last_name" in df.columns:
-                    df = df.rename(columns={"last_name": "nachname"})
-                else:
-                    return LeadImportResult(
-                        total_rows=total_rows,
-                        imported=0,
-                        failed=total_rows,
-                        errors=[f"Spalte '{col}' nicht gefunden"],
-                    )
+        # Support both German and English column names
+        col_mapping = {
+            "vorname": "first_name", "nachname": "last_name",
+            "telefon": "phone", "firma": "company"
+        }
+        df = df.rename(columns={k: v for k, v in col_mapping.items() if k in df.columns})
+        
+        if "first_name" not in df.columns or "last_name" not in df.columns:
+            return LeadImportResult(
+                total_rows=total_rows, imported=0, failed=total_rows,
+                errors=["Required columns: first_name, last_name (or vorname, nachname)"],
+            )
         
         for idx, row in df.iterrows():
             try:
-                first_name = str(row.get("vorname", "")).strip()
-                last_name = str(row.get("nachname", "")).strip()
+                first_name = str(row.get("first_name", "")).strip()
+                last_name = str(row.get("last_name", "")).strip()
                 email = str(row.get("email", row.get("e-mail", ""))).strip() or None
-                phone = str(row.get("telefon", row.get("phone", ""))).strip() or None
-                company_name = str(row.get("firma", row.get("company", ""))).strip() or None
+                phone = str(row.get("phone", "")).strip() or None
+                company_name = str(row.get("company", "")).strip() or None
                 
                 if not first_name or not last_name:
-                    errors.append(f"Zeile {idx + 2}: Vorname oder Nachname fehlt")
+                    errors.append(f"Row {idx + 2}: Missing first_name or last_name")
                     continue
                 
-                # Get or create company
-                company_id = None
+                comp_id = None
                 if company_name:
                     company = await company_service.get_company_by_name(db, company_name)
                     if not company:
@@ -226,56 +205,41 @@ async def import_leads_from_file(
                         company = await company_service.create_company(
                             db, CompanyCreate(name=company_name)
                         )
-                    company_id = company.id
+                    comp_id = company.id
                 
-                # Get or create contact
                 if email:
                     contact, _ = await contact_service.get_or_create_contact_by_email(
-                        db,
-                        email=email,
-                        first_name=first_name,
-                        last_name=last_name,
-                        phone=phone,
-                        company_id=company_id,
+                        db, email=email, first_name=first_name, last_name=last_name,
+                        phone=phone, company_id=comp_id,
                     )
                 else:
                     from src.schemas.contact import ContactCreate
                     contact = await contact_service.create_contact(
-                        db,
-                        ContactCreate(
-                            first_name=first_name,
-                            last_name=last_name,
-                            phone=phone,
-                            company_id=company_id,
+                        db, ContactCreate(
+                            first_name=first_name, last_name=last_name,
+                            phone=phone, company_id=comp_id,
                         ),
                     )
                 
-                # Create lead
                 lead = Lead(
-                    contact_id=contact.id,
-                    campaign_id=campaign_id,
-                    source="import",
-                    status=LeadStatus.NEW,
+                    contact_id=contact.id, campaign_id=campaign_id,
+                    source="import", status=LeadStatus.COLD,
                 )
                 db.add(lead)
                 imported += 1
                 
             except Exception as e:
-                errors.append(f"Zeile {idx + 2}: {str(e)}")
+                errors.append(f"Row {idx + 2}: {str(e)}")
         
         await db.flush()
         
         return LeadImportResult(
-            total_rows=total_rows,
-            imported=imported,
-            failed=total_rows - imported,
-            errors=errors[:10],  # Limit errors to first 10
+            total_rows=total_rows, imported=imported,
+            failed=total_rows - imported, errors=errors[:10],
         )
         
     except Exception as e:
         return LeadImportResult(
-            total_rows=0,
-            imported=0,
-            failed=0,
-            errors=[f"Fehler beim Lesen der Datei: {str(e)}"],
+            total_rows=0, imported=0, failed=0,
+            errors=[f"Error reading file: {str(e)}"],
         )

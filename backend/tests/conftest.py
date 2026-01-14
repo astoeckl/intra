@@ -1,6 +1,4 @@
-"""
-Test configuration and fixtures for the Callcenter Backend.
-"""
+"""Test configuration and fixtures."""
 import asyncio
 from datetime import datetime, timezone, timedelta
 from typing import AsyncGenerator, Generator
@@ -22,10 +20,8 @@ from src.models.contact_history import ContactHistory, HistoryType
 from src.models import Setting, LookupValue  # noqa: F401 - needed for metadata
 
 
-# Use in-memory SQLite for testing
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-# Create test engine with StaticPool for in-memory database
 test_engine = create_async_engine(
     TEST_DATABASE_URL,
     echo=False,
@@ -33,7 +29,6 @@ test_engine = create_async_engine(
     connect_args={"check_same_thread": False},
 )
 
-# Create test session factory
 TestSessionLocal = async_sessionmaker(
     test_engine,
     class_=AsyncSession,
@@ -45,7 +40,6 @@ TestSessionLocal = async_sessionmaker(
 
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create an event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
@@ -53,8 +47,6 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 @pytest_asyncio.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create a fresh database session for each test."""
-    # Create all tables
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     
@@ -62,15 +54,12 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
         await session.rollback()
     
-    # Drop all tables after test
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest_asyncio.fixture(scope="function")
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Create a test client with database override."""
-    
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
     
@@ -83,11 +72,8 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides.clear()
 
 
-# ============== Test Data Fixtures ==============
-
 @pytest_asyncio.fixture
 async def sample_company(db_session: AsyncSession) -> Company:
-    """Create a sample company for testing."""
     company = Company(
         name="Test GmbH",
         street="Teststraße 1",
@@ -109,7 +95,6 @@ async def sample_company(db_session: AsyncSession) -> Company:
 
 @pytest_asyncio.fixture
 async def sample_contact(db_session: AsyncSession, sample_company: Company) -> Contact:
-    """Create a sample contact for testing."""
     contact = Contact(
         first_name="Max",
         last_name="Mustermann",
@@ -132,7 +117,6 @@ async def sample_contact(db_session: AsyncSession, sample_company: Company) -> C
 
 @pytest_asyncio.fixture
 async def sample_contact_no_company(db_session: AsyncSession) -> Contact:
-    """Create a sample contact without company for testing."""
     contact = Contact(
         first_name="Erika",
         last_name="Musterfrau",
@@ -148,7 +132,6 @@ async def sample_contact_no_company(db_session: AsyncSession) -> Contact:
 
 @pytest_asyncio.fixture
 async def sample_campaign(db_session: AsyncSession) -> Campaign:
-    """Create a sample campaign for testing."""
     campaign = Campaign(
         name="Winter Kampagne 2026",
         description="Testkampagne für Q1",
@@ -167,9 +150,8 @@ async def sample_campaign(db_session: AsyncSession) -> Campaign:
 async def sample_lead(
     db_session: AsyncSession, sample_contact: Contact, sample_campaign: Campaign
 ) -> Lead:
-    """Create a sample lead for testing."""
     lead = Lead(
-        status=LeadStatus.NEW,
+        status=LeadStatus.COLD,
         source="landing_page",
         utm_source="google",
         utm_medium="cpc",
@@ -185,7 +167,6 @@ async def sample_lead(
 
 @pytest_asyncio.fixture
 async def sample_task(db_session: AsyncSession, sample_contact: Contact) -> Task:
-    """Create a sample task for testing."""
     task = Task(
         title="Rückruf vereinbaren",
         description="Kontakt anrufen wegen Angebot",
@@ -204,7 +185,6 @@ async def sample_task(db_session: AsyncSession, sample_contact: Contact) -> Task
 
 @pytest_asyncio.fixture
 async def sample_overdue_task(db_session: AsyncSession, sample_contact: Contact) -> Task:
-    """Create an overdue task for testing."""
     task = Task(
         title="Überfällige Aufgabe",
         description="Diese Aufgabe ist überfällig",
@@ -223,7 +203,6 @@ async def sample_overdue_task(db_session: AsyncSession, sample_contact: Contact)
 
 @pytest_asyncio.fixture
 async def sample_history_note(db_session: AsyncSession, sample_contact: Contact) -> ContactHistory:
-    """Create a sample history note for testing."""
     history = ContactHistory(
         contact_id=sample_contact.id,
         type=HistoryType.NOTE,
@@ -239,7 +218,6 @@ async def sample_history_note(db_session: AsyncSession, sample_contact: Contact)
 
 @pytest_asyncio.fixture
 async def sample_history_call(db_session: AsyncSession, sample_contact: Contact) -> ContactHistory:
-    """Create a sample call history entry for testing."""
     import json
     history = ContactHistory(
         contact_id=sample_contact.id,
@@ -257,7 +235,6 @@ async def sample_history_call(db_session: AsyncSession, sample_contact: Contact)
 
 @pytest_asyncio.fixture
 async def multiple_contacts(db_session: AsyncSession, sample_company: Company) -> list[Contact]:
-    """Create multiple contacts for pagination/search testing."""
     contacts = [
         Contact(
             first_name="Anna",
@@ -283,7 +260,7 @@ async def multiple_contacts(db_session: AsyncSession, sample_company: Company) -
             first_name="Thomas",
             last_name="Maier",
             email="thomas.maier@test.at",
-            is_active=False,  # Inactive contact
+            is_active=False,
         ),
         Contact(
             first_name="Lisa",
@@ -305,9 +282,8 @@ async def multiple_contacts(db_session: AsyncSession, sample_company: Company) -
 async def multiple_leads(
     db_session: AsyncSession, multiple_contacts: list[Contact], sample_campaign: Campaign
 ) -> list[Lead]:
-    """Create multiple leads for testing."""
     leads = []
-    statuses = [LeadStatus.NEW, LeadStatus.CONTACTED, LeadStatus.QUALIFIED, LeadStatus.NEW, LeadStatus.CONVERTED]
+    statuses = [LeadStatus.COLD, LeadStatus.WARM, LeadStatus.HOT, LeadStatus.COLD, LeadStatus.TO_BE_DONE]
     
     for i, (contact, status) in enumerate(zip(multiple_contacts, statuses)):
         lead = Lead(

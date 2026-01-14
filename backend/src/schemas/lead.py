@@ -8,9 +8,7 @@ from src.models.lead import LeadStatus
 
 
 class LeadBase(BaseSchema):
-    """Base lead schema."""
-    
-    status: LeadStatus = LeadStatus.NEW
+    status: LeadStatus = LeadStatus.COLD
     source: Optional[str] = Field(None, max_length=100)
     utm_source: Optional[str] = Field(None, max_length=100)
     utm_medium: Optional[str] = Field(None, max_length=100)
@@ -19,15 +17,12 @@ class LeadBase(BaseSchema):
 
 
 class LeadCreate(LeadBase):
-    """Schema for creating a lead."""
-    
     contact_id: int
     campaign_id: Optional[int] = None
 
 
 class LeadCreateFromForm(BaseSchema):
-    """Schema for creating a lead from landing page form."""
-    
+    """Landing page form submission."""
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
@@ -40,8 +35,6 @@ class LeadCreateFromForm(BaseSchema):
 
 
 class LeadUpdate(BaseSchema):
-    """Schema for updating a lead."""
-    
     status: Optional[LeadStatus] = None
     source: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = None
@@ -49,8 +42,6 @@ class LeadUpdate(BaseSchema):
 
 
 class LeadImportRow(BaseSchema):
-    """Schema for a single row in lead import."""
-    
     first_name: str
     last_name: str
     email: Optional[str] = None
@@ -60,8 +51,6 @@ class LeadImportRow(BaseSchema):
 
 
 class LeadImportResult(BaseSchema):
-    """Schema for lead import result."""
-    
     total_rows: int
     imported: int
     failed: int
@@ -69,8 +58,6 @@ class LeadImportResult(BaseSchema):
 
 
 class LeadResponse(LeadBase, TimestampSchema):
-    """Schema for lead response."""
-    
     id: int
     contact_id: int
     campaign_id: Optional[int] = None
@@ -79,14 +66,15 @@ class LeadResponse(LeadBase, TimestampSchema):
 
 
 class LeadListResponse(TimestampSchema):
-    """Schema for lead list item."""
-    
     id: int
     status: LeadStatus
     source: Optional[str] = None
     contact_id: int
     contact_name: str
     contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_mobile: Optional[str] = None
+    contact_position: Optional[str] = None
     company_name: Optional[str] = None
     campaign_id: Optional[int] = None
     campaign_name: Optional[str] = None

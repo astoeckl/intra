@@ -101,7 +101,7 @@ export interface ContactCreate {
 }
 
 // Lead types
-export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'disqualified'
+export type LeadStatus = 'cold' | 'warm' | 'hot' | 'to_be_done' | 'disqualified'
 
 export interface Lead {
   id: number
@@ -126,6 +126,9 @@ export interface LeadListItem {
   contact_id: number
   contact_name: string
   contact_email?: string
+  contact_phone?: string
+  contact_mobile?: string
+  contact_position?: string
   company_name?: string
   campaign_id?: number
   campaign_name?: string

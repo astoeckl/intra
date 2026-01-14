@@ -6,8 +6,15 @@ import type {
   LeadCreate,
   LeadStatus,
   LeadImportResult,
-  PaginatedResponse,
 } from '@/lib/types'
+
+interface PaginatedLeadResponse {
+  items: LeadListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
 
 interface LeadsParams {
   page?: number
@@ -20,7 +27,7 @@ export function useLeads(params: LeadsParams = {}) {
   return useQuery({
     queryKey: ['leads', params],
     queryFn: async () => {
-      const response = await api.get<PaginatedResponse<LeadListItem>>('/leads', {
+      const response = await api.get<PaginatedLeadResponse>('/leads', {
         params,
       })
       return response.data
