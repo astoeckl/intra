@@ -8,6 +8,7 @@ import {
   Phone,
   Settings,
   FileText,
+  TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -17,6 +18,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Callcenter', href: '/callcenter', icon: Phone },
   { name: 'Leads', href: '/leads', icon: Target },
+  { name: 'Opportunities', href: '/opportunities', icon: TrendingUp },
   { name: 'Kontakte', href: '/contacts', icon: Users },
   { name: 'Aufgaben', href: '/tasks', icon: CheckSquare },
   { name: 'E-Mail Vorlagen', href: '/templates', icon: Mail },
@@ -30,7 +32,6 @@ const bottomNavigation = [
 export default function Sidebar() {
   return (
     <aside className="flex w-64 flex-col border-r bg-card">
-      {/* Logo */}
       <div className="flex h-16 items-center gap-2 px-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
           <span className="font-display text-lg font-bold text-primary-foreground">A</span>
@@ -43,7 +44,6 @@ export default function Sidebar() {
 
       <Separator />
 
-      {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-1">
           {navigation.map((item) => (
@@ -68,7 +68,6 @@ export default function Sidebar() {
 
       <Separator />
 
-      {/* Bottom Navigation */}
       <div className="p-3">
         {bottomNavigation.map((item) => (
           <NavLink

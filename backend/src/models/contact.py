@@ -10,11 +10,10 @@ if TYPE_CHECKING:
     from src.models.lead import Lead
     from src.models.task import Task
     from src.models.contact_history import ContactHistory
+    from src.models.opportunity import Opportunity
 
 
 class Contact(Base, TimestampMixin):
-    """Contact/Kontakt model."""
-    
     __tablename__ = "contacts"
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -25,18 +24,16 @@ class Contact(Base, TimestampMixin):
     mobile: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     position: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    salutation: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # Herr, Frau
-    title: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # Dr., Mag., etc.
+    salutation: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    title: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
-    # Foreign Keys
     company_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("companies.id", ondelete="SET NULL"), nullable=True
     )
     
-    # Relationships
     company: Mapped[Optional["Company"]] = relationship(
         "Company", back_populates="contacts"
     )
@@ -49,10 +46,12 @@ class Contact(Base, TimestampMixin):
     history: Mapped[list["ContactHistory"]] = relationship(
         "ContactHistory", back_populates="contact", cascade="all, delete-orphan"
     )
+    opportunities: Mapped[list["Opportunity"]] = relationship(
+        "Opportunity", back_populates="contact"
+    )
     
     @property
     def full_name(self) -> str:
-        """Return full name with optional title."""
         parts = []
         if self.title:
             parts.append(self.title)

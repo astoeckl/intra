@@ -9,10 +9,10 @@ from src.models.base import TimestampMixin
 
 if TYPE_CHECKING:
     from src.models.contact import Contact
+    from src.models.opportunity import Opportunity
 
 
 class TaskStatus(str, enum.Enum):
-    """Task status enum."""
     OPEN = "open"
     IN_PROGRESS = "in_progress"
     DEFERRED = "deferred"
@@ -21,7 +21,6 @@ class TaskStatus(str, enum.Enum):
 
 
 class TaskPriority(str, enum.Enum):
-    """Task priority enum."""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -53,7 +52,10 @@ class Task(Base, TimestampMixin):
     contact_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("contacts.id", ondelete="SET NULL"), nullable=True
     )
-    assigned_to: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # User ID/name
+    opportunity_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("opportunities.id", ondelete="SET NULL"), nullable=True
+    )
+    assigned_to: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     # Self-referential for follow-up tasks
@@ -63,6 +65,9 @@ class Task(Base, TimestampMixin):
 
     # Relationships
     contact: Mapped[Optional["Contact"]] = relationship("Contact", back_populates="tasks")
+    opportunity: Mapped[Optional["Opportunity"]] = relationship(
+        "Opportunity", back_populates="tasks"
+    )
     parent_task: Mapped[Optional["Task"]] = relationship(
         "Task", remote_side="Task.id", back_populates="follow_up_tasks"
     )

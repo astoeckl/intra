@@ -7,6 +7,7 @@ import Leads from '@/pages/Leads'
 import Tasks from '@/pages/Tasks'
 import Callcenter from '@/pages/Callcenter'
 import Settings from '@/pages/Settings'
+import Opportunities from '@/pages/Opportunities'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="callcenter" element={<Callcenter />} />
           <Route path="contacts" element={<Contacts />} />
           <Route path="leads" element={<Leads />} />
+          <Route path="opportunities" element={<Opportunities />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="settings" element={<Settings />} />
         </Route>

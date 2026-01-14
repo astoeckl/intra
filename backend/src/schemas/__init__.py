@@ -57,30 +57,35 @@ from src.schemas.setting import (
     LookupValueResponse,
     LOOKUP_CATEGORIES,
 )
+from src.schemas.opportunity import (
+    OpportunityCreate,
+    OpportunityCreateFromLead,
+    OpportunityUpdate,
+    OpportunityClose,
+    OpportunityResponse,
+    OpportunityListResponse,
+    PipelineStageStats,
+    PipelineStats,
+)
 
 __all__ = [
-    # Base
     "BaseSchema",
     "TimestampSchema",
     "PaginationParams",
     "PaginatedResponse",
-    # Company
     "CompanyCreate",
     "CompanyUpdate",
     "CompanyResponse",
     "CompanyListResponse",
-    # Contact
     "ContactCreate",
     "ContactUpdate",
     "ContactResponse",
     "ContactListResponse",
     "ContactSearchResult",
-    # Campaign
     "CampaignCreate",
     "CampaignUpdate",
     "CampaignResponse",
     "CampaignListResponse",
-    # Lead
     "LeadCreate",
     "LeadCreateFromForm",
     "LeadUpdate",
@@ -88,24 +93,20 @@ __all__ = [
     "LeadImportResult",
     "LeadResponse",
     "LeadListResponse",
-    # Task
     "TaskCreate",
     "TaskUpdate",
     "TaskComplete",
     "TaskResponse",
     "TaskListResponse",
-    # Contact History
     "ContactHistoryResponse",
     "NoteCreate",
     "CallCreate",
-    # Email Template
     "EmailTemplateCreate",
     "EmailTemplateUpdate",
     "EmailTemplateResponse",
     "EmailSend",
     "EmailPreview",
     "EmailPreviewResponse",
-    # Setting
     "SettingCreate",
     "SettingUpdate",
     "SettingResponse",
@@ -113,4 +114,12 @@ __all__ = [
     "LookupValueUpdate",
     "LookupValueResponse",
     "LOOKUP_CATEGORIES",
+    "OpportunityCreate",
+    "OpportunityCreateFromLead",
+    "OpportunityUpdate",
+    "OpportunityClose",
+    "OpportunityResponse",
+    "OpportunityListResponse",
+    "PipelineStageStats",
+    "PipelineStats",
 ]
