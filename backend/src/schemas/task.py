@@ -1,6 +1,6 @@
 from typing import Optional
-from datetime import datetime
-from pydantic import Field
+from datetime import datetime, timezone
+from pydantic import Field, field_validator
 
 from src.schemas.base import BaseSchema, TimestampSchema
 from src.schemas.contact import ContactListResponse
@@ -23,6 +23,17 @@ class TaskCreate(TaskBase):
     contact_id: Optional[int] = None
     assigned_to: Optional[str] = None
     parent_task_id: Optional[int] = None
+    
+    @field_validator('due_date')
+    @classmethod
+    def due_date_not_in_past(cls, v: Optional[datetime]) -> Optional[datetime]:
+        """Validate that due_date is not in the past."""
+        if v is not None:
+            now = datetime.now(timezone.utc)
+            # Compare only dates, not times (allow today)
+            if v.date() < now.date():
+                raise ValueError('Fälligkeitsdatum darf nicht in der Vergangenheit liegen')
+        return v
 
 
 class TaskUpdate(BaseSchema):
@@ -45,6 +56,16 @@ class TaskComplete(BaseSchema):
     follow_up_title: Optional[str] = None
     follow_up_due_date: Optional[datetime] = None
     follow_up_priority: TaskPriority = TaskPriority.MEDIUM
+    
+    @field_validator('follow_up_due_date')
+    @classmethod
+    def follow_up_due_date_not_in_past(cls, v: Optional[datetime]) -> Optional[datetime]:
+        """Validate that follow_up_due_date is not in the past."""
+        if v is not None:
+            now = datetime.now(timezone.utc)
+            if v.date() < now.date():
+                raise ValueError('Fälligkeitsdatum darf nicht in der Vergangenheit liegen')
+        return v
 
 
 class TaskResponse(TaskBase, TimestampSchema):

@@ -93,8 +93,13 @@ async def create_task(
         )
         db.add(history)
     
-    await db.refresh(task)
-    return task
+    await db.flush()
+    
+    # Re-fetch the task with contact relationship loaded
+    result = await get_task(db, task.id)
+    # Should never be None since we just created it
+    assert result is not None
+    return result
 
 
 async def update_task(
@@ -169,4 +174,5 @@ async def delete_task(db: AsyncSession, task_id: int) -> bool:
         return False
     
     await db.delete(task)
+    await db.flush()
     return True

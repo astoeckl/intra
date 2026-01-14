@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.contact_history import ContactHistory, HistoryType
-from src.schemas.contact_history import NoteCreate, CallCreate
+from src.schemas.contact_history import NoteCreate, CallCreate, ContactHistoryUpdate
 
 
 async def get_contact_history(
@@ -101,3 +101,46 @@ async def add_email_sent(
     await db.flush()
     await db.refresh(history)
     return history
+
+
+async def get_history_entry(
+    db: AsyncSession,
+    history_id: int,
+) -> Optional[ContactHistory]:
+    """Get a single history entry by ID."""
+    query = select(ContactHistory).where(ContactHistory.id == history_id)
+    result = await db.execute(query)
+    return result.scalar_one_or_none()
+
+
+async def update_history_entry(
+    db: AsyncSession,
+    history_id: int,
+    update_data: ContactHistoryUpdate,
+) -> Optional[ContactHistory]:
+    """Update a history entry."""
+    history = await get_history_entry(db, history_id)
+    if not history:
+        return None
+    
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for field, value in update_dict.items():
+        setattr(history, field, value)
+    
+    await db.flush()
+    await db.refresh(history)
+    return history
+
+
+async def delete_history_entry(
+    db: AsyncSession,
+    history_id: int,
+) -> bool:
+    """Delete a history entry."""
+    history = await get_history_entry(db, history_id)
+    if not history:
+        return False
+    
+    await db.delete(history)
+    await db.flush()
+    return True

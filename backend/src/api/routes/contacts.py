@@ -8,6 +8,7 @@ from src.schemas.contact import (
     ContactResponse,
     ContactListResponse,
     ContactSearchResult,
+    LeadSummary,
 )
 from src.schemas.base import PaginatedResponse
 from src.services import contact_service
@@ -81,6 +82,11 @@ async def get_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     
+    leads = [
+        LeadSummary(id=lead.id, status=lead.status, source=lead.source)
+        for lead in contact.leads
+    ]
+    
     return ContactResponse(
         id=contact.id,
         first_name=contact.first_name,
@@ -98,6 +104,7 @@ async def get_contact(
         company_id=contact.company_id,
         company=contact.company,
         full_name=contact.full_name,
+        leads=leads,
         created_at=contact.created_at,
         updated_at=contact.updated_at,
     )

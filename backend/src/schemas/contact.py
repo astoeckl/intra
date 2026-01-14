@@ -3,6 +3,15 @@ from pydantic import EmailStr, Field
 
 from src.schemas.base import BaseSchema, TimestampSchema
 from src.schemas.company import CompanyListResponse
+from src.models.lead import LeadStatus
+
+
+class LeadSummary(BaseSchema):
+    """Simplified lead schema for contact response."""
+    
+    id: int
+    status: LeadStatus
+    source: Optional[str] = None
 
 
 class ContactBase(BaseSchema):
@@ -53,6 +62,7 @@ class ContactResponse(ContactBase, TimestampSchema):
     company_id: Optional[int] = None
     company: Optional[CompanyListResponse] = None
     full_name: str
+    leads: list[LeadSummary] = []
 
 
 class ContactListResponse(TimestampSchema):

@@ -27,6 +27,13 @@ class CallCreate(BaseSchema):
     outcome: Optional[str] = None  # reached, voicemail, no_answer
 
 
+class ContactHistoryUpdate(BaseSchema):
+    """Schema for updating a history entry."""
+    
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    content: Optional[str] = None
+
+
 class ContactHistoryResponse(ContactHistoryBase, TimestampSchema):
     """Schema for contact history response."""
     

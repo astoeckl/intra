@@ -95,10 +95,13 @@ async def search_contacts(
 
 
 async def get_contact(db: AsyncSession, contact_id: int) -> Optional[Contact]:
-    """Get a single contact by ID with company."""
+    """Get a single contact by ID with company and leads."""
     result = await db.execute(
         select(Contact)
-        .options(selectinload(Contact.company))
+        .options(
+            selectinload(Contact.company),
+            selectinload(Contact.leads),
+        )
         .where(Contact.id == contact_id)
     )
     return result.scalar_one_or_none()

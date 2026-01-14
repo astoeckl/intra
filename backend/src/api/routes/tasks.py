@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
-from src.models.task import TaskStatus
+from src.models.task import TaskStatus, Task
 from src.schemas.task import (
     TaskCreate,
     TaskUpdate,
@@ -15,6 +16,19 @@ from src.schemas.base import PaginatedResponse
 from src.services import task_service
 
 router = APIRouter()
+
+
+def is_task_overdue(task: Task, now: datetime) -> bool:
+    """Check if a task is overdue, handling timezone-naive dates."""
+    if task.due_date is None:
+        return False
+    
+    due_date = task.due_date
+    # Handle timezone-naive dates from database (e.g., SQLite)
+    if due_date.tzinfo is None:
+        due_date = due_date.replace(tzinfo=timezone.utc)
+    
+    return due_date < now and task.status in [TaskStatus.OPEN, TaskStatus.IN_PROGRESS]
 
 
 @router.get("", response_model=PaginatedResponse)
@@ -42,12 +56,6 @@ async def list_tasks(
     now = datetime.now(timezone.utc)
     items = []
     for task in tasks:
-        is_task_overdue = (
-            task.due_date is not None
-            and task.due_date < now
-            and task.status in [TaskStatus.OPEN, TaskStatus.IN_PROGRESS]
-        )
-        
         item = TaskListResponse(
             id=task.id,
             title=task.title,
@@ -57,7 +65,7 @@ async def list_tasks(
             assigned_to=task.assigned_to,
             contact_id=task.contact_id,
             contact_name=f"{task.contact.first_name} {task.contact.last_name}" if task.contact else None,
-            is_overdue=is_task_overdue,
+            is_overdue=is_task_overdue(task, now),
             created_at=task.created_at,
             updated_at=task.updated_at,
         )
@@ -90,12 +98,6 @@ async def list_my_tasks(
     now = datetime.now(timezone.utc)
     items = []
     for task in tasks:
-        is_task_overdue = (
-            task.due_date is not None
-            and task.due_date < now
-            and task.status in [TaskStatus.OPEN, TaskStatus.IN_PROGRESS]
-        )
-        
         item = TaskListResponse(
             id=task.id,
             title=task.title,
@@ -105,7 +107,7 @@ async def list_my_tasks(
             assigned_to=task.assigned_to,
             contact_id=task.contact_id,
             contact_name=f"{task.contact.first_name} {task.contact.last_name}" if task.contact else None,
-            is_overdue=is_task_overdue,
+            is_overdue=is_task_overdue(task, now),
             created_at=task.created_at,
             updated_at=task.updated_at,
         )

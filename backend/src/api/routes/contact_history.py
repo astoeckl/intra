@@ -1,8 +1,13 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
-from src.schemas.contact_history import ContactHistoryResponse, NoteCreate, CallCreate
+from src.schemas.contact_history import (
+    ContactHistoryResponse,
+    ContactHistoryUpdate,
+    NoteCreate,
+    CallCreate,
+)
 from src.schemas.base import PaginatedResponse
 from src.services import history_service
 
@@ -57,3 +62,27 @@ async def add_call(
     
     history = await history_service.add_call(db, contact_id, call_data, created_by=current_user)
     return ContactHistoryResponse.model_validate(history)
+
+
+@router.put("/history/{history_id}", response_model=ContactHistoryResponse)
+async def update_history_entry(
+    history_id: int,
+    update_data: ContactHistoryUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a history entry."""
+    history = await history_service.update_history_entry(db, history_id, update_data)
+    if not history:
+        raise HTTPException(status_code=404, detail="History entry not found")
+    return ContactHistoryResponse.model_validate(history)
+
+
+@router.delete("/history/{history_id}", status_code=204)
+async def delete_history_entry(
+    history_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a history entry."""
+    deleted = await history_service.delete_history_entry(db, history_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="History entry not found")

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type {
   Contact,
@@ -24,6 +24,38 @@ export function useContacts(params: ContactsParams = {}) {
         params,
       })
       return response.data
+    },
+  })
+}
+
+interface InfiniteContactsParams {
+  search?: string
+  company_id?: number
+  is_active?: boolean
+  page_size?: number
+}
+
+export function useInfiniteContacts(params: InfiniteContactsParams = {}) {
+  const { page_size = 20, ...filterParams } = params
+  
+  return useInfiniteQuery({
+    queryKey: ['contacts', 'infinite', filterParams],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await api.get<PaginatedResponse<ContactListItem>>('/contacts', {
+        params: {
+          page: pageParam,
+          page_size,
+          ...filterParams,
+        },
+      })
+      return response.data
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.total_pages) {
+        return lastPage.page + 1
+      }
+      return undefined
     },
   })
 }

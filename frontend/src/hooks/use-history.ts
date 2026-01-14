@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import type { ContactHistoryItem, PaginatedResponse } from '@/lib/types'
+import type { ContactHistoryItem, ContactHistoryUpdate, PaginatedResponse } from '@/lib/types'
 
 export function useContactHistory(contactId: number | null) {
   return useQuery({
@@ -53,6 +53,50 @@ export function useAddCall() {
         { content, duration_minutes, outcome }
       )
       return response.data
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['contactHistory', variables.contactId] })
+    },
+  })
+}
+
+export function useUpdateHistoryEntry() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      historyId,
+      contactId,
+      data,
+    }: {
+      historyId: number
+      contactId: number
+      data: ContactHistoryUpdate
+    }) => {
+      const response = await api.put<ContactHistoryItem>(
+        `/contacts/history/${historyId}`,
+        data
+      )
+      return response.data
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['contactHistory', variables.contactId] })
+    },
+  })
+}
+
+export function useDeleteHistoryEntry() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      historyId,
+      contactId,
+    }: {
+      historyId: number
+      contactId: number
+    }) => {
+      await api.delete(`/contacts/history/${historyId}`)
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contactHistory', variables.contactId] })
