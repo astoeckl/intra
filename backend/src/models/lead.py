@@ -9,6 +9,7 @@ from src.models.base import TimestampMixin
 if TYPE_CHECKING:
     from src.models.contact import Contact
     from src.models.campaign import Campaign
+    from src.models.opportunity import Opportunity
 
 
 class LeadStatus(str, enum.Enum):
@@ -16,6 +17,7 @@ class LeadStatus(str, enum.Enum):
     WARM = "warm"
     HOT = "hot"
     TO_BE_DONE = "to_be_done"
+    CONVERTED = "converted"
     DISQUALIFIED = "disqualified"
 
 
@@ -42,6 +44,9 @@ class Lead(Base, TimestampMixin):
     
     contact: Mapped["Contact"] = relationship("Contact", back_populates="leads")
     campaign: Mapped[Optional["Campaign"]] = relationship("Campaign", back_populates="leads")
+    opportunity: Mapped[Optional["Opportunity"]] = relationship(
+        "Opportunity", back_populates="lead", uselist=False
+    )
     
     def __repr__(self) -> str:
         return f"<Lead(id={self.id}, status='{self.status.value}')>"

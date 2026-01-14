@@ -101,7 +101,7 @@ export interface ContactCreate {
 }
 
 // Lead types
-export type LeadStatus = 'cold' | 'warm' | 'hot' | 'to_be_done' | 'disqualified'
+export type LeadStatus = 'cold' | 'warm' | 'hot' | 'to_be_done' | 'converted' | 'disqualified'
 
 export interface Lead {
   id: number
@@ -293,4 +293,111 @@ export interface LookupValueUpdate {
   label?: string
   sort_order?: number
   is_active?: boolean
+}
+
+// Opportunity types
+export type OpportunityStage = 'qualification' | 'discovery' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost'
+
+export interface Opportunity {
+  id: number
+  name: string
+  stage: OpportunityStage
+  expected_value?: number
+  probability: number
+  expected_close_date?: string
+  actual_close_date?: string
+  close_reason?: string
+  notes?: string
+  company_id?: number
+  contact_id?: number
+  lead_id?: number
+  company_name?: string
+  contact_name?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface OpportunityListItem {
+  id: number
+  name: string
+  stage: OpportunityStage
+  expected_value?: number
+  probability: number
+  expected_close_date?: string
+  actual_close_date?: string
+  company_id?: number
+  company_name?: string
+  contact_id?: number
+  contact_name?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface OpportunityCreate {
+  name: string
+  stage?: OpportunityStage
+  expected_value?: number
+  probability?: number
+  expected_close_date?: string
+  notes?: string
+  company_id?: number
+  contact_id?: number
+}
+
+export interface OpportunityUpdate {
+  name?: string
+  stage?: OpportunityStage
+  expected_value?: number
+  probability?: number
+  expected_close_date?: string
+  notes?: string
+  company_id?: number
+  contact_id?: number
+}
+
+export interface OpportunityCreateFromLead {
+  name: string
+  expected_value?: number
+  expected_close_date?: string
+  notes?: string
+}
+
+export interface OpportunityClose {
+  won: boolean
+  close_reason?: string
+  actual_value?: number
+}
+
+export interface PipelineStageStats {
+  stage: OpportunityStage
+  count: number
+  total_value: number
+  weighted_value: number
+}
+
+export interface PipelineStats {
+  total_opportunities: number
+  total_value: number
+  weighted_value: number
+  stages: PipelineStageStats[]
+  win_rate: number
+  average_deal_size: number
+}
+
+export const STAGE_LABELS: Record<OpportunityStage, string> = {
+  qualification: 'Qualifizierung',
+  discovery: 'Bedarfsanalyse',
+  proposal: 'Angebot',
+  negotiation: 'Verhandlung',
+  closed_won: 'Gewonnen',
+  closed_lost: 'Verloren',
+}
+
+export const STAGE_COLORS: Record<OpportunityStage, string> = {
+  qualification: 'bg-slate-500',
+  discovery: 'bg-blue-500',
+  proposal: 'bg-amber-500',
+  negotiation: 'bg-purple-500',
+  closed_won: 'bg-emerald-500',
+  closed_lost: 'bg-red-500',
 }

@@ -11,11 +11,11 @@ from src.api.routes import (
     email_templates,
     public,
     settings,
+    opportunities,
 )
 
 api_router = APIRouter()
 
-# Include route modules
 api_router.include_router(health.router, prefix="/health", tags=["Health"])
 api_router.include_router(companies.router, prefix="/companies", tags=["Companies"])
 api_router.include_router(contacts.router, prefix="/contacts", tags=["Contacts"])
@@ -26,3 +26,4 @@ api_router.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 api_router.include_router(email_templates.router, prefix="/email-templates", tags=["Email Templates"])
 api_router.include_router(public.router, prefix="/public", tags=["Public"])
 api_router.include_router(settings.router, prefix="/settings", tags=["Settings"])
+api_router.include_router(opportunities.router, prefix="/opportunities", tags=["Opportunities"])

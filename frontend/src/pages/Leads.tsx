@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Search, Filter, Loader2, Phone, Mail } from 'lucide-react'
+import { Plus, Search, Filter, Loader2, Phone, Mail, TrendingUp, MoreHorizontal } from 'lucide-react'
 import { useLeads, useUpdateLead, useCreateLead } from '@/hooks/use-leads'
 import { useContactSearch } from '@/hooks/use-contacts'
 import { Button } from '@/components/ui/button'
@@ -22,16 +22,25 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { LeadStatus, LeadListItem, ContactSearchResult } from '@/lib/types'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { ConvertToOpportunityDialog } from '@/components/leads/ConvertToOpportunityDialog'
 
 const statusLabels: Record<LeadStatus, string> = {
   cold: 'Cold',
   warm: 'Warm',
   hot: 'Hot',
   to_be_done: 'To Be Done',
+  converted: 'Converted',
   disqualified: 'Disqualified',
 }
 
@@ -42,6 +51,7 @@ const statusColors: Record<LeadStatus, BadgeVariant> = {
   warm: 'outline',
   hot: 'default',
   to_be_done: 'default',
+  converted: 'default',
   disqualified: 'destructive',
 }
 
@@ -50,6 +60,7 @@ export default function Leads() {
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [selectedLead, setSelectedLead] = useState<LeadListItem | null>(null)
+  const [convertLead, setConvertLead] = useState<LeadListItem | null>(null)
   
   // State für Lead-Erstellung
   const [contactSearch, setContactSearch] = useState('')
@@ -114,6 +125,15 @@ export default function Leads() {
     setShowContactResults(false)
   }
 
+  const handleConvertClick = (lead: LeadListItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setConvertLead(lead)
+  }
+
+  const canConvert = (lead: LeadListItem) => {
+    return lead.status !== 'converted' && lead.status !== 'disqualified'
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -149,6 +169,7 @@ export default function Leads() {
             <SelectItem value="warm">Warm</SelectItem>
             <SelectItem value="hot">Hot</SelectItem>
             <SelectItem value="to_be_done">To Be Done</SelectItem>
+            <SelectItem value="converted">Converted</SelectItem>
             <SelectItem value="disqualified">Disqualified</SelectItem>
           </SelectContent>
         </Select>
@@ -185,14 +206,14 @@ export default function Leads() {
                   <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Quelle</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Erstellt</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium">Aktionen</th>
                 </tr>
               </thead>
               <tbody>
                 {data?.items.map((lead) => (
                   <tr
                     key={lead.id}
-                    className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
-                    onClick={() => setSelectedLead(lead)}
+                    className="border-b last:border-0 hover:bg-muted/50"
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium">{lead.contact_name}</p>
@@ -239,6 +260,7 @@ export default function Leads() {
                           <SelectItem value="warm">Warm</SelectItem>
                           <SelectItem value="hot">Hot</SelectItem>
                           <SelectItem value="to_be_done">To Be Done</SelectItem>
+                          <SelectItem value="converted">Converted</SelectItem>
                           <SelectItem value="disqualified">Disqualified</SelectItem>
                         </SelectContent>
                       </Select>
@@ -246,6 +268,48 @@ export default function Leads() {
                     <td className="px-4 py-3 text-sm">{lead.source || '-'}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {format(new Date(lead.created_at), 'dd.MM.yyyy', { locale: de })}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {canConvert(lead) && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={(e) => handleConvertClick(lead, e)}
+                                className="text-emerald-600"
+                              >
+                                <TrendingUp className="mr-2 h-4 w-4" />
+                                In Opportunity konvertieren
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleStatusChange(lead.id, 'hot')
+                            }}
+                            disabled={lead.status === 'hot'}
+                          >
+                            Als Hot markieren
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleStatusChange(lead.id, 'disqualified')
+                            }}
+                            disabled={lead.status === 'disqualified'}
+                            className="text-destructive"
+                          >
+                            Disqualifizieren
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -429,6 +493,15 @@ export default function Leads() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Convert to Opportunity Dialog */}
+      <ConvertToOpportunityDialog
+        open={!!convertLead}
+        onOpenChange={(open) => {
+          if (!open) setConvertLead(null)
+        }}
+        lead={convertLead}
+      />
     </div>
   )
 }

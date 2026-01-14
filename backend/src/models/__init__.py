@@ -9,6 +9,7 @@ from src.models.contact_history import ContactHistory, HistoryType
 from src.models.email_template import EmailTemplate
 from src.models.setting import Setting
 from src.models.lookup_value import LookupValue
+from src.models.opportunity import Opportunity, OpportunityStage, STAGE_DEFAULT_PROBABILITY
 
 __all__ = [
     "TimestampMixin",
@@ -25,4 +26,7 @@ __all__ = [
     "EmailTemplate",
     "Setting",
     "LookupValue",
+    "Opportunity",
+    "OpportunityStage",
+    "STAGE_DEFAULT_PROBABILITY",
 ]
