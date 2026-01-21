@@ -1,10 +1,14 @@
 /**
- * Landing Page Template for Lead Generation
- * 
- * This is a standalone page that can be deployed separately or
- * integrated into marketing campaigns.
- * 
- * Usage: /landing/:campaignId
+ * Landing Page Module
+ *
+ * A standalone lead capture page template for marketing campaigns. Can be deployed
+ * separately or integrated into campaign-specific URLs. Supports UTM parameter
+ * tracking for marketing attribution.
+ *
+ * @module pages/LandingPage
+ * @example
+ * // Route usage
+ * /landing/:campaignId?utm_source=google&utm_medium=cpc&utm_campaign=spring
  */
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -17,6 +21,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { api } from '@/lib/api'
 
+/** Zod validation schema for the lead capture form. */
 const leadSchema = z.object({
   first_name: z.string().min(1, 'Vorname ist erforderlich'),
   last_name: z.string().min(1, 'Nachname ist erforderlich'),
@@ -25,12 +30,26 @@ const leadSchema = z.object({
   company_name: z.string().optional(),
 })
 
+/** Form data type inferred from the lead validation schema. */
 type LeadFormData = z.infer<typeof leadSchema>
 
+/** Props for the LandingPage component. */
 interface LandingPageProps {
+  /** Optional campaign ID to associate captured leads with. */
   campaignId?: number
 }
 
+/**
+ * Landing page component for capturing leads from marketing campaigns.
+ *
+ * Displays a clean, conversion-optimized form that collects contact information.
+ * Automatically captures UTM parameters from the URL for marketing attribution.
+ * Shows a success message upon form submission.
+ *
+ * @param props - Component props
+ * @param props.campaignId - Optional campaign ID to associate the lead with
+ * @returns The lead capture landing page
+ */
 export default function LandingPage({ campaignId }: LandingPageProps) {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)

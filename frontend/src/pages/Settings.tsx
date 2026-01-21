@@ -1,3 +1,11 @@
+/**
+ * Settings Page Module
+ *
+ * Provides a centralized configuration interface for managing application settings,
+ * lookup values, email/SMTP configuration, notifications, and integrations.
+ *
+ * @module pages/Settings
+ */
 import { useState } from 'react'
 import { Settings as SettingsIcon, List, Mail, Bell, Link } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -7,8 +15,21 @@ import EmailSettingsTab from '@/components/settings/EmailSettingsTab'
 import NotificationsTab from '@/components/settings/NotificationsTab'
 import IntegrationsTab from '@/components/settings/IntegrationsTab'
 
+/** Available tabs in the settings page. */
 type SettingsTab = 'general' | 'lookups' | 'email' | 'notifications' | 'integrations'
 
+/**
+ * Settings page component with tabbed navigation.
+ *
+ * Organizes application configuration into logical tabs:
+ * - General: Basic application settings
+ * - Lookups: Configurable dropdown values for forms
+ * - Email/SMTP: Mail server configuration
+ * - Notifications: Alert and notification preferences
+ * - Integrations: Third-party service connections
+ *
+ * @returns The settings management page
+ */
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
 

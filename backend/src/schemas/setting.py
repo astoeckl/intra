@@ -1,3 +1,9 @@
+"""
+Setting and Lookup Value Schemas.
+
+Pydantic models for settings and lookup values API validation.
+"""
+
 from typing import Optional, Literal
 from pydantic import Field
 
@@ -6,9 +12,10 @@ from src.schemas.base import BaseSchema, TimestampSchema
 
 # ============ Setting Schemas ============
 
+
 class SettingBase(BaseSchema):
-    """Base setting schema."""
-    
+    """Base setting schema with common fields."""
+
     key: str = Field(..., min_length=1, max_length=255)
     category: str = Field(..., min_length=1, max_length=100)
     value: Optional[str] = None
@@ -22,14 +29,14 @@ class SettingCreate(SettingBase):
 
 class SettingUpdate(BaseSchema):
     """Schema for updating a setting."""
-    
+
     value: Optional[str] = None
     value_type: Optional[Literal["string", "number", "boolean", "json"]] = None
 
 
 class SettingResponse(SettingBase, TimestampSchema):
     """Schema for setting response."""
-    
+
     id: int
 
 
@@ -37,7 +44,7 @@ class SettingResponse(SettingBase, TimestampSchema):
 
 class LookupValueBase(BaseSchema):
     """Base lookup value schema."""
-    
+
     category: str = Field(..., min_length=1, max_length=100)
     value: str = Field(..., min_length=1, max_length=100)
     label: str = Field(..., min_length=1, max_length=255)
@@ -52,7 +59,7 @@ class LookupValueCreate(LookupValueBase):
 
 class LookupValueUpdate(BaseSchema):
     """Schema for updating a lookup value."""
-    
+
     value: Optional[str] = Field(None, min_length=1, max_length=100)
     label: Optional[str] = Field(None, min_length=1, max_length=255)
     sort_order: Optional[int] = Field(None, ge=0)
@@ -61,7 +68,7 @@ class LookupValueUpdate(BaseSchema):
 
 class LookupValueResponse(LookupValueBase, TimestampSchema):
     """Schema for lookup value response."""
-    
+
     id: int
 
 

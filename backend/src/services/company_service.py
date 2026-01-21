@@ -1,3 +1,9 @@
+"""
+Company Service.
+
+Business logic for company management.
+"""
+
 from typing import Optional, Sequence
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,23 +18,34 @@ async def get_companies(
     limit: int = 20,
     search: Optional[str] = None,
 ) -> tuple[Sequence[Company], int]:
-    """Get all companies with pagination and optional search."""
+    """
+    Retrieve paginated companies with optional name search.
+
+    Args:
+        db: Database session.
+        skip: Number of records to skip.
+        limit: Maximum records to return.
+        search: Partial name match (case-insensitive).
+
+    Returns:
+        Tuple of (companies list, total count).
+    """
     query = select(Company)
     count_query = select(func.count(Company.id))
-    
+
     if search:
         search_filter = Company.name.ilike(f"%{search}%")
         query = query.where(search_filter)
         count_query = count_query.where(search_filter)
-    
+
     query = query.order_by(Company.name).offset(skip).limit(limit)
-    
+
     result = await db.execute(query)
     companies = result.scalars().all()
-    
+
     count_result = await db.execute(count_query)
     total = count_result.scalar() or 0
-    
+
     return companies, total
 
 
@@ -60,11 +77,11 @@ async def update_company(
     company = await get_company(db, company_id)
     if not company:
         return None
-    
+
     update_data = company_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(company, field, value)
-    
+
     await db.flush()
     await db.refresh(company)
     return company
@@ -75,6 +92,6 @@ async def delete_company(db: AsyncSession, company_id: int) -> bool:
     company = await get_company(db, company_id)
     if not company:
         return False
-    
+
     await db.delete(company)
     return True

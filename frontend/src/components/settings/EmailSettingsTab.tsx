@@ -1,3 +1,11 @@
+/**
+ * Email Settings Tab Component Module
+ *
+ * Provides SMTP server configuration and email sender settings
+ * for outbound email functionality.
+ *
+ * @module components/settings/EmailSettingsTab
+ */
 import { useState, useEffect } from 'react'
 import { useSettings, useUpdateSetting, useCreateSetting } from '@/hooks/use-settings'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Loader2, Save, Mail, Send } from 'lucide-react'
 
+/** Local state interface for email/SMTP settings. */
 interface EmailSettings {
   smtpHost: string
   smtpPort: string
@@ -16,6 +25,18 @@ interface EmailSettings {
   senderName: string
 }
 
+/**
+ * Email settings tab component for SMTP configuration.
+ *
+ * Manages email-related settings:
+ * - SMTP server host and port
+ * - Authentication credentials
+ * - Default sender email and name
+ *
+ * Also provides a test email feature to verify the configuration.
+ *
+ * @returns The email settings tab content
+ */
 export default function EmailSettingsTab() {
   const { data: settings, isLoading } = useSettings('email')
   const updateSetting = useUpdateSetting()

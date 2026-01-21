@@ -1,3 +1,10 @@
+/**
+ * Dashboard Page Component.
+ *
+ * Main landing page showing CRM overview statistics,
+ * API health status, and recent activity summaries.
+ */
+
 import { useQuery } from '@tanstack/react-query'
 import {
   Users,

@@ -1,3 +1,9 @@
+"""
+Database Configuration.
+
+Provides async SQLAlchemy setup with connection pooling.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from typing import AsyncGenerator
@@ -6,7 +12,7 @@ from src.core.config import get_settings
 
 settings = get_settings()
 
-# Create async engine
+# Async engine with connection pooling
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
@@ -32,7 +38,12 @@ class Base(DeclarativeBase):
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Dependency to get database session."""
+    """
+    FastAPI dependency that provides a database session.
+
+    Handles transaction commit on success, rollback on exception.
+    Sessions are automatically closed after request completes.
+    """
     async with async_session_maker() as session:
         try:
             yield session
@@ -45,6 +56,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Initialize database tables."""
+    """
+    Initialize database schema.
+
+    Creates all tables defined in SQLAlchemy models.
+    Safe to call multiple times (uses CREATE IF NOT EXISTS).
+    """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

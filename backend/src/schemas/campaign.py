@@ -1,3 +1,9 @@
+"""
+Campaign Schemas.
+
+Pydantic models for campaign API request/response validation.
+"""
+
 from typing import Optional
 from datetime import date
 from pydantic import Field
@@ -6,8 +12,8 @@ from src.schemas.base import BaseSchema, TimestampSchema
 
 
 class CampaignBase(BaseSchema):
-    """Base campaign schema."""
-    
+    """Base campaign schema with common fields."""
+
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     type: str = Field(..., max_length=50)  # social_media, email, landing_page
@@ -26,7 +32,7 @@ class CampaignCreate(CampaignBase):
 
 class CampaignUpdate(BaseSchema):
     """Schema for updating a campaign."""
-    
+
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     type: Optional[str] = Field(None, max_length=50)
@@ -40,12 +46,12 @@ class CampaignUpdate(BaseSchema):
 
 class CampaignResponse(CampaignBase, TimestampSchema):
     """Schema for campaign response."""
-    
+
     id: int
     leads_count: int = 0
 
 
 class CampaignListResponse(CampaignBase, TimestampSchema):
     """Schema for campaign list item."""
-    
+
     id: int

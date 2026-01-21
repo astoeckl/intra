@@ -1,3 +1,11 @@
+/**
+ * Notifications Tab Component Module
+ *
+ * Provides notification and reminder settings configuration
+ * including email notification toggles and reminder intervals.
+ *
+ * @module components/settings/NotificationsTab
+ */
 import { useState, useEffect } from 'react'
 import { useSettings, useUpdateSetting, useCreateSetting } from '@/hooks/use-settings'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,13 +15,30 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Loader2, Save, Bell } from 'lucide-react'
 
+/** Local state interface for notification settings. */
 interface NotificationSettings {
+  /** Task reminder check interval in minutes. */
   taskReminderInterval: string
+  /** Whether to send email when a task is assigned. */
   emailOnTaskAssignment: boolean
+  /** Whether to send email when a lead is updated. */
   emailOnLeadUpdate: boolean
+  /** Whether to send email when a campaign completes. */
   emailOnCampaignComplete: boolean
 }
 
+/**
+ * Notifications settings tab component.
+ *
+ * Manages notification preferences:
+ * - Task reminder interval configuration
+ * - Email notification toggles for various events
+ *   - Task assignment
+ *   - Lead updates
+ *   - Campaign completion
+ *
+ * @returns The notifications settings tab content
+ */
 export default function NotificationsTab() {
   const { data: settings, isLoading } = useSettings('notifications')
   const updateSetting = useUpdateSetting()

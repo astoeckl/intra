@@ -1,3 +1,9 @@
+"""
+Task Service.
+
+Business logic for task management including completion workflow.
+"""
+
 from typing import Optional, Sequence
 from datetime import datetime, timezone
 from sqlalchemy import select, func, and_
@@ -20,7 +26,11 @@ async def get_tasks(
     contact_id: Optional[int] = None,
     is_overdue: Optional[bool] = None,
 ) -> tuple[Sequence[Task], int]:
-    """Get all tasks with pagination and filters."""
+    """
+    Retrieve paginated tasks with comprehensive filtering.
+
+    Overdue filter matches open/in_progress tasks past their due_date.
+    """
     query = select(Task).options(selectinload(Task.contact))
     count_query = select(func.count(Task.id))
 
@@ -130,7 +140,15 @@ async def complete_task(
     complete_data: TaskComplete,
     completed_by: Optional[str] = None,
 ) -> Optional[tuple[Task, Optional[Task]]]:
-    """Complete a task with optional follow-up task."""
+    """
+    Mark task as completed with optional follow-up creation.
+
+    Sets status to COMPLETED, records completion timestamp,
+    and appends any completion notes. If requested, creates
+    a linked follow-up task inheriting contact and assignment.
+
+    Returns tuple of (completed_task, follow_up_task or None).
+    """
     task = await get_task(db, task_id)
     if not task:
         return None

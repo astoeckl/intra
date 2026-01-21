@@ -1,3 +1,9 @@
+"""
+Email Template Model.
+
+Stores reusable email templates with variable substitution support.
+"""
+
 from typing import Optional
 from sqlalchemy import String, Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
@@ -7,10 +13,16 @@ from src.models.base import TimestampMixin
 
 
 class EmailTemplate(Base, TimestampMixin):
-    """Email template model."""
-    
+    """
+    Email template model.
+
+    Templates support variable placeholders (e.g., {{contact.first_name}})
+    that are substituted with actual values when sending. Variables field
+    stores the list of available placeholders as JSON.
+    """
+
     __tablename__ = "email_templates"
-    
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -19,6 +31,6 @@ class EmailTemplate(Base, TimestampMixin):
     variables: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON list of variables
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     category: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # confirmation, reminder, etc.
-    
+
     def __repr__(self) -> str:
         return f"<EmailTemplate(id={self.id}, name='{self.name}')>"

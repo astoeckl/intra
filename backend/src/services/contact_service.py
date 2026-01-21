@@ -1,3 +1,9 @@
+"""
+Contact Service.
+
+Business logic for contact management including search functionality.
+"""
+
 from typing import Optional, Sequence
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,10 +22,23 @@ async def get_contacts(
     company_id: Optional[int] = None,
     is_active: Optional[bool] = None,
 ) -> tuple[Sequence[Contact], int]:
-    """Get all contacts with pagination and filters."""
+    """
+    Retrieve paginated contacts with filtering.
+
+    Args:
+        db: Database session.
+        skip: Number of records to skip.
+        limit: Maximum records to return.
+        search: Filter by name or email (case-insensitive).
+        company_id: Filter by associated company.
+        is_active: Filter by active status.
+
+    Returns:
+        Tuple of (contacts list with company loaded, total count).
+    """
     query = select(Contact).options(selectinload(Contact.company))
     count_query = select(func.count(Contact.id))
-    
+
     filters = []
     if search:
         search_filter = or_(
@@ -28,25 +47,25 @@ async def get_contacts(
             Contact.email.ilike(f"%{search}%"),
         )
         filters.append(search_filter)
-    
+
     if company_id is not None:
         filters.append(Contact.company_id == company_id)
-    
+
     if is_active is not None:
         filters.append(Contact.is_active == is_active)
-    
+
     if filters:
         query = query.where(*filters)
         count_query = count_query.where(*filters)
-    
+
     query = query.order_by(Contact.last_name, Contact.first_name).offset(skip).limit(limit)
-    
+
     result = await db.execute(query)
     contacts = result.scalars().all()
-    
+
     count_result = await db.execute(count_query)
     total = count_result.scalar() or 0
-    
+
     return contacts, total
 
 
@@ -56,7 +75,7 @@ async def search_contacts(
     """Search contacts for autocomplete (<200ms target)."""
     if not query or len(query) < 2:
         return []
-    
+
     search_query = (
         select(
             Contact.id,
@@ -79,10 +98,10 @@ async def search_contacts(
         .order_by(Contact.last_name, Contact.first_name)
         .limit(limit)
     )
-    
+
     result = await db.execute(search_query)
     rows = result.all()
-    
+
     return [
         ContactSearchResult(
             id=row.id,
@@ -123,11 +142,11 @@ async def update_contact(
     contact = await get_contact(db, contact_id)
     if not contact:
         return None
-    
+
     update_data = contact_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(contact, field, value)
-    
+
     await db.flush()
     await db.refresh(contact)
     return contact
@@ -138,7 +157,7 @@ async def delete_contact(db: AsyncSession, contact_id: int) -> bool:
     contact = await get_contact(db, contact_id)
     if not contact:
         return False
-    
+
     contact.is_active = False
     await db.flush()
     return True
@@ -152,15 +171,31 @@ async def get_or_create_contact_by_email(
     company_id: Optional[int] = None,
     **kwargs,
 ) -> tuple[Contact, bool]:
-    """Get existing contact by email or create new one."""
+    """
+    Find existing contact by email or create new one.
+
+    Deduplication helper that prevents duplicate contacts
+    when processing form submissions or imports.
+
+    Args:
+        db: Database session.
+        email: Email to search for.
+        first_name: First name for new contact.
+        last_name: Last name for new contact.
+        company_id: Optional company association.
+        **kwargs: Additional contact fields (phone, position, etc.).
+
+    Returns:
+        Tuple of (contact, was_created).
+    """
     result = await db.execute(
         select(Contact).where(Contact.email == email)
     )
     existing = result.scalar_one_or_none()
-    
+
     if existing:
         return existing, False
-    
+
     contact = Contact(
         email=email,
         first_name=first_name,

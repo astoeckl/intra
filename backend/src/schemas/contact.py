@@ -1,3 +1,9 @@
+"""
+Contact Schemas.
+
+Pydantic models for contact API request/response validation.
+"""
+
 from typing import Optional
 from pydantic import EmailStr, Field
 
@@ -7,8 +13,8 @@ from src.models.lead import LeadStatus
 
 
 class LeadSummary(BaseSchema):
-    """Simplified lead schema for contact response."""
-    
+    """Minimal lead fields embedded in contact responses."""
+
     id: int
     status: LeadStatus
     source: Optional[str] = None
@@ -16,7 +22,7 @@ class LeadSummary(BaseSchema):
 
 class ContactBase(BaseSchema):
     """Base contact schema."""
-    
+
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
     email: Optional[EmailStr] = None
@@ -33,13 +39,13 @@ class ContactBase(BaseSchema):
 
 class ContactCreate(ContactBase):
     """Schema for creating a contact."""
-    
+
     company_id: Optional[int] = None
 
 
 class ContactUpdate(BaseSchema):
     """Schema for updating a contact."""
-    
+
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     email: Optional[EmailStr] = None
@@ -57,7 +63,7 @@ class ContactUpdate(BaseSchema):
 
 class ContactResponse(ContactBase, TimestampSchema):
     """Schema for contact response."""
-    
+
     id: int
     company_id: Optional[int] = None
     company: Optional[CompanyListResponse] = None
@@ -67,7 +73,7 @@ class ContactResponse(ContactBase, TimestampSchema):
 
 class ContactListResponse(TimestampSchema):
     """Schema for contact list item."""
-    
+
     id: int
     first_name: str
     last_name: str
@@ -81,7 +87,7 @@ class ContactListResponse(TimestampSchema):
 
 class ContactSearchResult(BaseSchema):
     """Schema for contact search autocomplete."""
-    
+
     id: int
     full_name: str
     email: Optional[str] = None

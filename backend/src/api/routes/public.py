@@ -1,4 +1,10 @@
-"""Public endpoints for landing pages (no auth required)."""
+"""
+Public API Routes.
+
+Endpoints for landing pages and public-facing forms.
+These endpoints do not require authentication.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,14 +21,28 @@ async def submit_lead_form(
     lead_data: LeadCreateFromForm,
     db: AsyncSession = Depends(get_db),
 ):
-    """Public endpoint for landing page form submissions."""
+    """
+    Submit a lead capture form from landing page.
+
+    Creates contact and lead records. Companies are created if not existing.
+    Response messages are in German for end-user display.
+
+    Args:
+        lead_data: Form fields including name, email, and optional company.
+
+    Returns:
+        Success message in German.
+
+    Raises:
+        HTTPException 400: Processing error (generic message for security).
+    """
     try:
         lead = await lead_service.create_lead_from_form(db, lead_data)
-        
+
         # TODO: Send auto-email with lead magnet if campaign has one
         # if lead.campaign and lead.campaign.lead_magnet:
         #     await email_service.send_lead_magnet(db, lead.contact_id, lead.campaign.lead_magnet)
-        
+
         return JSONResponse(
             status_code=201,
             content={
@@ -42,13 +62,20 @@ async def get_campaign_info(
     campaign_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get public campaign info for landing page."""
+    """
+    Retrieve public campaign information for landing pages.
+
+    Only returns active campaigns with limited public fields.
+
+    Raises:
+        HTTPException 404: Campaign not found or inactive.
+    """
     from src.services import campaign_service
-    
+
     campaign = await campaign_service.get_campaign(db, campaign_id)
     if not campaign or not campaign.is_active:
         raise HTTPException(status_code=404, detail="Campaign not found")
-    
+
     return {
         "id": campaign.id,
         "name": campaign.name,

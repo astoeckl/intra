@@ -109,10 +109,10 @@ class TestGetTaskEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == sample_task.id
-        assert data["title"] == "Test Aufgabe"
-        assert data["description"] == "Test Beschreibung"
-        assert data["status"] == "open"
-        assert data["priority"] == "medium"
+        assert data["title"] == sample_task.title
+        assert data["description"] == sample_task.description
+        assert data["status"] == sample_task.status.value
+        assert data["priority"] == sample_task.priority.value
 
     @pytest.mark.asyncio
     async def test_get_task_not_found(self, client: AsyncClient):

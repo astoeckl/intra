@@ -1,7 +1,26 @@
+/**
+ * Integrations Tab Component Module
+ *
+ * Displays available and upcoming third-party integrations
+ * such as calendar sync and social media lead imports.
+ *
+ * @module components/settings/IntegrationsTab
+ */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Share2, Link } from 'lucide-react'
 
+/**
+ * Integrations tab component showing available external connections.
+ *
+ * Currently displays placeholder cards for upcoming integrations:
+ * - Calendar integration (Microsoft 365, Google Calendar, Apple Calendar)
+ * - Meta Ads integration (Facebook and Instagram Lead Ads)
+ *
+ * All integrations are marked as "Coming Soon" in this version.
+ *
+ * @returns The integrations tab content
+ */
 export default function IntegrationsTab() {
   return (
     <div className="space-y-4">

@@ -1,3 +1,9 @@
+"""
+History Service.
+
+Business logic for managing contact interaction timeline.
+"""
+
 from typing import Optional, Sequence
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +18,11 @@ async def get_contact_history(
     skip: int = 0,
     limit: int = 50,
 ) -> tuple[Sequence[ContactHistory], int]:
-    """Get history entries for a contact."""
+    """
+    Retrieve paginated history entries for a contact.
+
+    Returns entries sorted by created_at descending (most recent first).
+    """
     query = (
         select(ContactHistory)
         .where(ContactHistory.contact_id == contact_id)
@@ -20,17 +30,17 @@ async def get_contact_history(
         .offset(skip)
         .limit(limit)
     )
-    
+
     count_query = select(func.count(ContactHistory.id)).where(
         ContactHistory.contact_id == contact_id
     )
-    
+
     result = await db.execute(query)
     history = result.scalars().all()
-    
+
     count_result = await db.execute(count_query)
     total = count_result.scalar() or 0
-    
+
     return history, total
 
 
@@ -62,12 +72,12 @@ async def add_call(
 ) -> ContactHistory:
     """Add a call documentation to contact history."""
     import json
-    
+
     extra_data = json.dumps({
         "duration_minutes": call_data.duration_minutes,
         "outcome": call_data.outcome,
     })
-    
+
     history = ContactHistory(
         contact_id=contact_id,
         type=HistoryType.CALL,
@@ -122,11 +132,11 @@ async def update_history_entry(
     history = await get_history_entry(db, history_id)
     if not history:
         return None
-    
+
     update_dict = update_data.model_dump(exclude_unset=True)
     for field, value in update_dict.items():
         setattr(history, field, value)
-    
+
     await db.flush()
     await db.refresh(history)
     return history
@@ -140,7 +150,7 @@ async def delete_history_entry(
     history = await get_history_entry(db, history_id)
     if not history:
         return False
-    
+
     await db.delete(history)
     await db.flush()
     return True

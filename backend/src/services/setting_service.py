@@ -1,3 +1,9 @@
+"""
+Setting Service.
+
+Business logic for application settings and configurable lookup values.
+"""
+
 from typing import Optional, Sequence
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,16 +20,21 @@ from src.schemas.setting import (
 
 # ============ Setting Service Functions ============
 
+
 async def get_all_settings(
     db: AsyncSession,
     category: Optional[str] = None,
 ) -> Sequence[Setting]:
-    """Get all settings, optionally filtered by category."""
+    """
+    Retrieve all settings, optionally filtered by category.
+
+    Returns settings sorted by category and key.
+    """
     query = select(Setting)
-    
+
     if category:
         query = query.where(Setting.category == category)
-    
+
     query = query.order_by(Setting.category, Setting.key)
     result = await db.execute(query)
     return result.scalars().all()
@@ -59,11 +70,11 @@ async def update_setting(
     setting = await get_setting(db, key)
     if not setting:
         return None
-    
+
     update_data = setting_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(setting, field, value)
-    
+
     await db.flush()
     await db.refresh(setting)
     return setting
@@ -76,9 +87,13 @@ async def upsert_setting(
     value: Optional[str],
     value_type: str = "string",
 ) -> Setting:
-    """Create or update a setting by key."""
+    """
+    Create or update a setting by key.
+
+    Idempotent operation useful for initialization scripts.
+    """
     setting = await get_setting(db, key)
-    
+
     if setting:
         setting.value = value
         setting.value_type = value_type
@@ -103,7 +118,7 @@ async def delete_setting(db: AsyncSession, key: str) -> bool:
     setting = await get_setting(db, key)
     if not setting:
         return False
-    
+
     await db.delete(setting)
     return True
 
@@ -117,10 +132,10 @@ async def get_lookup_values(
 ) -> Sequence[LookupValue]:
     """Get all lookup values for a category."""
     query = select(LookupValue).where(LookupValue.category == category)
-    
+
     if not include_inactive:
         query = query.where(LookupValue.is_active == True)
-    
+
     query = query.order_by(LookupValue.sort_order, LookupValue.label)
     result = await db.execute(query)
     return result.scalars().all()
@@ -177,11 +192,11 @@ async def update_lookup_value(
     lookup = await get_lookup_value(db, lookup_id)
     if not lookup:
         return None
-    
+
     update_data = lookup_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(lookup, field, value)
-    
+
     await db.flush()
     await db.refresh(lookup)
     return lookup
@@ -196,13 +211,13 @@ async def delete_lookup_value(
     lookup = await get_lookup_value(db, lookup_id)
     if not lookup:
         return False
-    
+
     if soft_delete:
         lookup.is_active = False
         await db.flush()
     else:
         await db.delete(lookup)
-    
+
     return True
 
 
@@ -211,11 +226,16 @@ async def reorder_lookup_values(
     category: str,
     ordered_ids: list[int],
 ) -> bool:
-    """Reorder lookup values by setting sort_order based on list position."""
+    """
+    Reorder lookup values based on provided ID sequence.
+
+    Sets sort_order to match list index. Only updates values
+    that belong to the specified category.
+    """
     for index, lookup_id in enumerate(ordered_ids):
         lookup = await get_lookup_value(db, lookup_id)
         if lookup and lookup.category == category:
             lookup.sort_order = index
-    
+
     await db.flush()
     return True

@@ -1,3 +1,11 @@
+/**
+ * Sidebar Component Module
+ *
+ * Renders the main navigation sidebar with application logo, primary navigation
+ * links, and bottom utility links (settings).
+ *
+ * @module components/layout/Sidebar
+ */
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -13,6 +21,7 @@ import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 
+/** Primary navigation items displayed in the main navigation area. */
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Callcenter', href: '/callcenter', icon: Phone },
@@ -23,10 +32,23 @@ const navigation = [
   { name: 'Landing Pages', href: '/landing-pages', icon: FileText },
 ]
 
+/** Bottom navigation items (settings, utilities). */
 const bottomNavigation = [
   { name: 'Einstellungen', href: '/settings', icon: Settings },
 ]
 
+/**
+ * Sidebar navigation component.
+ *
+ * Displays:
+ * - Application logo and branding
+ * - Primary navigation links with active state highlighting
+ * - Bottom utility links (settings)
+ *
+ * Uses React Router's NavLink for automatic active state management.
+ *
+ * @returns The sidebar navigation component
+ */
 export default function Sidebar() {
   return (
     <aside className="flex w-64 flex-col border-r bg-card">

@@ -1,9 +1,27 @@
+/**
+ * Header Component Module
+ *
+ * Renders the top navigation bar with global search, notifications,
+ * and user profile information.
+ *
+ * @module components/layout/Header
+ */
 import { Bell, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 
+/**
+ * Header component displaying global search and user controls.
+ *
+ * Features:
+ * - Global search input for contacts, leads, and tasks
+ * - Notification bell with unread indicator
+ * - User avatar and profile information
+ *
+ * @returns The header navigation bar
+ */
 export default function Header() {
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-6">

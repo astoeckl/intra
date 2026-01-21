@@ -1,3 +1,10 @@
+"""
+Company API Routes.
+
+Provides CRUD operations for company records. Companies serve as
+organizational groupings for contacts in the CRM.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,12 +28,22 @@ async def list_companies(
     search: str = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all companies with pagination."""
+    """
+    List companies with pagination and optional search.
+
+    Args:
+        page: Page number (1-indexed).
+        page_size: Items per page (max 100).
+        search: Filter by company name (partial match, case-insensitive).
+
+    Returns:
+        Paginated list of companies sorted alphabetically by name.
+    """
     skip = (page - 1) * page_size
     companies, total = await company_service.get_companies(
         db, skip=skip, limit=page_size, search=search
     )
-    
+
     return PaginatedResponse(
         items=[CompanyListResponse.model_validate(c) for c in companies],
         total=total,
@@ -41,11 +58,19 @@ async def get_company(
     company_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single company by ID."""
+    """
+    Retrieve a single company by ID.
+
+    Returns:
+        Company details including associated contacts count.
+
+    Raises:
+        HTTPException 404: Company does not exist.
+    """
     company = await company_service.get_company(db, company_id)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
-    
+
     response = CompanyResponse.model_validate(company)
     response.contacts_count = len(company.contacts) if company.contacts else 0
     return response
@@ -56,7 +81,18 @@ async def create_company(
     company_data: CompanyCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new company."""
+    """
+    Create a new company.
+
+    Args:
+        company_data: Company details. Name must be unique.
+
+    Returns:
+        Created company with assigned ID.
+
+    Raises:
+        HTTPException 400: Company with this name already exists.
+    """
     # Check for duplicate name
     existing = await company_service.get_company_by_name(db, company_data.name)
     if existing:
@@ -64,7 +100,7 @@ async def create_company(
             status_code=400,
             detail=f"Company with name '{company_data.name}' already exists",
         )
-    
+
     company = await company_service.create_company(db, company_data)
     return CompanyResponse.model_validate(company)
 
@@ -75,7 +111,19 @@ async def update_company(
     company_data: CompanyUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update an existing company."""
+    """
+    Update an existing company.
+
+    Args:
+        company_id: Company identifier.
+        company_data: Fields to update. Only provided fields are modified.
+
+    Returns:
+        Updated company.
+
+    Raises:
+        HTTPException 404: Company does not exist.
+    """
     company = await company_service.update_company(db, company_id, company_data)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
@@ -87,7 +135,14 @@ async def delete_company(
     company_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a company."""
+    """
+    Delete a company permanently.
+
+    Associated contacts will have their company_id set to NULL.
+
+    Raises:
+        HTTPException 404: Company does not exist.
+    """
     deleted = await company_service.delete_company(db, company_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Company not found")

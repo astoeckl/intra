@@ -1,3 +1,9 @@
+"""
+Company Schemas.
+
+Pydantic models for company API request/response validation.
+"""
+
 from typing import Optional
 from pydantic import EmailStr, HttpUrl, Field
 
@@ -5,8 +11,8 @@ from src.schemas.base import BaseSchema, TimestampSchema
 
 
 class CompanyBase(BaseSchema):
-    """Base company schema."""
-    
+    """Base company schema with common fields."""
+
     name: str = Field(..., min_length=1, max_length=255)
     street: Optional[str] = Field(None, max_length=255)
     zip_code: Optional[str] = Field(None, max_length=20)
@@ -28,7 +34,7 @@ class CompanyCreate(CompanyBase):
 
 class CompanyUpdate(BaseSchema):
     """Schema for updating a company."""
-    
+
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     street: Optional[str] = Field(None, max_length=255)
     zip_code: Optional[str] = Field(None, max_length=20)
@@ -45,12 +51,12 @@ class CompanyUpdate(BaseSchema):
 
 class CompanyResponse(CompanyBase, TimestampSchema):
     """Schema for company response."""
-    
+
     id: int
     contacts_count: int = 0
 
 
 class CompanyListResponse(CompanyBase, TimestampSchema):
     """Schema for company list item."""
-    
+
     id: int

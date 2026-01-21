@@ -1,3 +1,9 @@
+"""
+Task Schemas.
+
+Pydantic models for task API request/response validation.
+"""
+
 from typing import Optional
 from datetime import datetime, timezone
 from pydantic import Field, field_validator
@@ -8,8 +14,8 @@ from src.models.task import TaskStatus, TaskPriority
 
 
 class TaskBase(BaseSchema):
-    """Base task schema."""
-    
+    """Base task schema with common fields."""
+
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     status: TaskStatus = TaskStatus.OPEN
@@ -19,11 +25,11 @@ class TaskBase(BaseSchema):
 
 class TaskCreate(TaskBase):
     """Schema for creating a task."""
-    
+
     contact_id: Optional[int] = None
     assigned_to: Optional[str] = None
     parent_task_id: Optional[int] = None
-    
+
     @field_validator('due_date')
     @classmethod
     def due_date_not_in_past(cls, v: Optional[datetime]) -> Optional[datetime]:
@@ -38,7 +44,7 @@ class TaskCreate(TaskBase):
 
 class TaskUpdate(BaseSchema):
     """Schema for updating a task."""
-    
+
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     status: Optional[TaskStatus] = None
@@ -50,13 +56,13 @@ class TaskUpdate(BaseSchema):
 
 class TaskComplete(BaseSchema):
     """Schema for completing a task with optional follow-up."""
-    
+
     notes: Optional[str] = None
     create_follow_up: bool = False
     follow_up_title: Optional[str] = None
     follow_up_due_date: Optional[datetime] = None
     follow_up_priority: TaskPriority = TaskPriority.MEDIUM
-    
+
     @field_validator('follow_up_due_date')
     @classmethod
     def follow_up_due_date_not_in_past(cls, v: Optional[datetime]) -> Optional[datetime]:
@@ -70,7 +76,7 @@ class TaskComplete(BaseSchema):
 
 class TaskResponse(TaskBase, TimestampSchema):
     """Schema for task response."""
-    
+
     id: int
     contact_id: Optional[int] = None
     assigned_to: Optional[str] = None
@@ -82,7 +88,7 @@ class TaskResponse(TaskBase, TimestampSchema):
 
 class TaskListResponse(TimestampSchema):
     """Schema for task list item."""
-    
+
     id: int
     title: str
     status: TaskStatus

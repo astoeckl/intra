@@ -1,3 +1,9 @@
+"""
+Lead Schemas.
+
+Pydantic models for lead API request/response validation.
+"""
+
 from typing import Optional
 from pydantic import Field, EmailStr
 
@@ -8,6 +14,8 @@ from src.models.lead import LeadStatus
 
 
 class LeadBase(BaseSchema):
+    """Base lead schema with common fields."""
+
     status: LeadStatus = LeadStatus.COLD
     source: Optional[str] = Field(None, max_length=100)
     utm_source: Optional[str] = Field(None, max_length=100)
@@ -42,6 +50,8 @@ class LeadUpdate(BaseSchema):
 
 
 class LeadImportRow(BaseSchema):
+    """Schema representing a single row in lead import file."""
+
     first_name: str
     last_name: str
     email: Optional[str] = None
@@ -51,10 +61,12 @@ class LeadImportRow(BaseSchema):
 
 
 class LeadImportResult(BaseSchema):
+    """Response schema for bulk lead import operation."""
+
     total_rows: int
     imported: int
     failed: int
-    errors: list[str]
+    errors: list[str]  # First 10 error messages
 
 
 class LeadResponse(LeadBase, TimestampSchema):

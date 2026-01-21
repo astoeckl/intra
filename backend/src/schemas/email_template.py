@@ -1,3 +1,9 @@
+"""
+Email Template Schemas.
+
+Pydantic models for email template API request/response validation.
+"""
+
 from typing import Optional
 from pydantic import Field
 
@@ -5,8 +11,8 @@ from src.schemas.base import BaseSchema, TimestampSchema
 
 
 class EmailTemplateBase(BaseSchema):
-    """Base email template schema."""
-    
+    """Base email template schema with common fields."""
+
     name: str = Field(..., min_length=1, max_length=255)
     subject: str = Field(..., min_length=1, max_length=500)
     body: str = Field(..., min_length=1)
@@ -17,13 +23,13 @@ class EmailTemplateBase(BaseSchema):
 
 class EmailTemplateCreate(EmailTemplateBase):
     """Schema for creating an email template."""
-    
+
     variables: Optional[list[str]] = None
 
 
 class EmailTemplateUpdate(BaseSchema):
     """Schema for updating an email template."""
-    
+
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     subject: Optional[str] = Field(None, min_length=1, max_length=500)
     body: Optional[str] = Field(None, min_length=1)
@@ -35,14 +41,14 @@ class EmailTemplateUpdate(BaseSchema):
 
 class EmailTemplateResponse(EmailTemplateBase, TimestampSchema):
     """Schema for email template response."""
-    
+
     id: int
     variables: Optional[list[str]] = None
 
 
 class EmailSend(BaseSchema):
     """Schema for sending an email."""
-    
+
     template_id: int
     contact_id: int
     subject_override: Optional[str] = None
@@ -51,14 +57,14 @@ class EmailSend(BaseSchema):
 
 class EmailPreview(BaseSchema):
     """Schema for email preview request."""
-    
+
     template_id: int
     contact_id: int
 
 
 class EmailPreviewResponse(BaseSchema):
     """Schema for email preview response."""
-    
+
     subject: str
     body: str
     to_email: str

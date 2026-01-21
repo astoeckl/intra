@@ -1,3 +1,10 @@
+/**
+ * Settings and Lookup Values React Query Hooks.
+ *
+ * Provides data fetching and mutation hooks for application
+ * configuration and dropdown options.
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type {
@@ -11,6 +18,7 @@ import type {
 
 // ============ Settings Hooks ============
 
+/** Fetch all settings, optionally filtered by category. */
 export function useSettings(category?: string) {
   return useQuery({
     queryKey: ['settings', { category }],
@@ -78,6 +86,7 @@ export function useDeleteSetting() {
 
 // ============ Lookup Values Hooks ============
 
+/** Fetch list of all lookup categories. */
 export function useLookupCategories() {
   return useQuery({
     queryKey: ['lookup-categories'],
@@ -88,6 +97,7 @@ export function useLookupCategories() {
   })
 }
 
+/** Fetch lookup values for a category. */
 export function useLookupValues(category: string, includeInactive = false) {
   return useQuery({
     queryKey: ['lookup-values', category, { includeInactive }],
@@ -145,6 +155,7 @@ export function useDeleteLookupValue() {
   })
 }
 
+/** Reorder lookup values by providing ordered ID list. */
 export function useReorderLookupValues() {
   const queryClient = useQueryClient()
 

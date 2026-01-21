@@ -1,3 +1,10 @@
+/**
+ * Leads Page Component.
+ *
+ * Sales lead management interface with status filtering,
+ * inline status updates, and lead creation via contact search.
+ */
+
 import { useState } from 'react'
 import { Plus, Search, Filter, Loader2, Phone, Mail } from 'lucide-react'
 import { useLeads, useUpdateLead, useCreateLead } from '@/hooks/use-leads'
@@ -50,7 +57,7 @@ export default function Leads() {
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [selectedLead, setSelectedLead] = useState<LeadListItem | null>(null)
-  
+
   // State für Lead-Erstellung
   const [contactSearch, setContactSearch] = useState('')
   const [selectedContact, setSelectedContact] = useState<ContactSearchResult | null>(null)

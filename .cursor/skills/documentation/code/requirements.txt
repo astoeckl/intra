@@ -1,0 +1,2 @@
+# Requirements for documentation tooling
+pydocstyle>=6.3.0

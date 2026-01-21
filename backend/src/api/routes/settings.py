@@ -1,3 +1,10 @@
+"""
+Settings and Lookup Values API Routes.
+
+Provides CRUD operations for application settings (key-value pairs)
+and configurable lookup values (dropdown options).
+"""
+
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +30,12 @@ router = APIRouter()
 async def list_lookup_categories(
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all available lookup categories."""
+    """
+    List all unique lookup categories.
+
+    Returns:
+        Sorted list of category names (e.g., "industry", "lead_status").
+    """
     categories = await setting_service.get_all_lookup_categories(db)
     return categories
 
@@ -34,7 +46,16 @@ async def list_lookup_values(
     include_inactive: bool = Query(False),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all lookup values for a category."""
+    """
+    List lookup values for a specific category.
+
+    Args:
+        category: Lookup category name.
+        include_inactive: Include soft-deleted values (default: active only).
+
+    Returns:
+        List sorted by sort_order, then label.
+    """
     lookups = await setting_service.get_lookup_values(
         db, category=category, include_inactive=include_inactive
     )
@@ -46,7 +67,15 @@ async def create_lookup_value(
     lookup_data: LookupValueCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new lookup value."""
+    """
+    Create a new lookup value.
+
+    Args:
+        lookup_data: Category, value, label, and optional sort_order.
+
+    Raises:
+        HTTPException 400: Value already exists in this category.
+    """
     existing = await setting_service.get_lookup_value_by_category_and_value(
         db, lookup_data.category, lookup_data.value
     )
@@ -55,7 +84,7 @@ async def create_lookup_value(
             status_code=400,
             detail=f"Lookup value '{lookup_data.value}' already exists in category '{lookup_data.category}'",
         )
-    
+
     lookup = await setting_service.create_lookup_value(db, lookup_data)
     return LookupValueResponse.model_validate(lookup)
 
@@ -66,7 +95,12 @@ async def update_lookup_value(
     lookup_data: LookupValueUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update an existing lookup value."""
+    """
+    Update an existing lookup value.
+
+    Raises:
+        HTTPException 404: Lookup value does not exist.
+    """
     lookup = await setting_service.update_lookup_value(db, lookup_id, lookup_data)
     if not lookup:
         raise HTTPException(status_code=404, detail="Lookup value not found")
@@ -79,7 +113,16 @@ async def delete_lookup_value(
     hard_delete: bool = Query(False),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a lookup value (soft delete by default)."""
+    """
+    Delete a lookup value.
+
+    Args:
+        lookup_id: Lookup value identifier.
+        hard_delete: Permanently delete (default: soft delete via is_active=False).
+
+    Raises:
+        HTTPException 404: Lookup value does not exist.
+    """
     deleted = await setting_service.delete_lookup_value(
         db, lookup_id, soft_delete=not hard_delete
     )
@@ -94,7 +137,15 @@ async def reorder_lookup_values(
     ordered_ids: list[int],
     db: AsyncSession = Depends(get_db),
 ):
-    """Reorder lookup values by providing an ordered list of IDs."""
+    """
+    Reorder lookup values within a category.
+
+    Args:
+        category: Lookup category name.
+        ordered_ids: List of lookup IDs in desired display order.
+
+    Sort order is set based on position in the provided list.
+    """
     await setting_service.reorder_lookup_values(db, category, ordered_ids)
     return {"message": "Lookup values reordered"}
 
@@ -106,7 +157,15 @@ async def list_settings(
     category: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all settings, optionally filtered by category."""
+    """
+    List all application settings.
+
+    Args:
+        category: Optional filter by setting category.
+
+    Returns:
+        List of settings sorted by category, then key.
+    """
     settings = await setting_service.get_all_settings(db, category=category)
     return [SettingResponse.model_validate(s) for s in settings]
 
@@ -116,14 +175,22 @@ async def create_setting(
     setting_data: SettingCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new setting."""
+    """
+    Create a new application setting.
+
+    Args:
+        setting_data: Key, category, value, and value_type.
+
+    Raises:
+        HTTPException 400: Setting with this key already exists.
+    """
     existing = await setting_service.get_setting(db, setting_data.key)
     if existing:
         raise HTTPException(
             status_code=400,
             detail=f"Setting with key '{setting_data.key}' already exists",
         )
-    
+
     setting = await setting_service.create_setting(db, setting_data)
     return SettingResponse.model_validate(setting)
 
@@ -133,7 +200,14 @@ async def get_setting(
     key: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single setting by key."""
+    """
+    Retrieve a single setting by key.
+
+    Supports hierarchical keys (e.g., "email/smtp/host").
+
+    Raises:
+        HTTPException 404: Setting does not exist.
+    """
     setting = await setting_service.get_setting(db, key)
     if not setting:
         raise HTTPException(status_code=404, detail="Setting not found")
@@ -146,7 +220,12 @@ async def update_setting(
     setting_data: SettingUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update an existing setting."""
+    """
+    Update an existing setting.
+
+    Raises:
+        HTTPException 404: Setting does not exist.
+    """
     setting = await setting_service.update_setting(db, key, setting_data)
     if not setting:
         raise HTTPException(status_code=404, detail="Setting not found")
@@ -158,7 +237,12 @@ async def delete_setting(
     key: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a setting."""
+    """
+    Permanently delete a setting.
+
+    Raises:
+        HTTPException 404: Setting does not exist.
+    """
     deleted = await setting_service.delete_setting(db, key)
     if not deleted:
         raise HTTPException(status_code=404, detail="Setting not found")

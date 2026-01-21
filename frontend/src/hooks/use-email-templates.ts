@@ -1,3 +1,10 @@
+/**
+ * Email Template React Query Hooks.
+ *
+ * Provides data fetching and mutation hooks for email template
+ * operations including preview and send functionality.
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { EmailTemplate, PaginatedResponse } from '@/lib/types'
@@ -8,6 +15,7 @@ interface EmailTemplatesParams {
   is_active?: boolean
 }
 
+/** Fetch paginated email templates. */
 export function useEmailTemplates(params: EmailTemplatesParams = {}) {
   return useQuery({
     queryKey: ['email-templates', params],
@@ -44,6 +52,7 @@ interface EmailPreviewResponse {
   to_name: string
 }
 
+/** Generate email preview with variable substitution. */
 export function useEmailPreview() {
   return useMutation({
     mutationFn: async (data: EmailPreviewRequest) => {
@@ -59,6 +68,7 @@ interface EmailSendRequest {
   subject_override?: string
 }
 
+/** Send an email using a template. Invalidates contact history on success. */
 export function useSendEmail() {
   const queryClient = useQueryClient()
 

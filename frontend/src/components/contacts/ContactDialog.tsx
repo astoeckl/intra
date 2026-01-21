@@ -1,3 +1,11 @@
+/**
+ * Contact Dialog Component Module
+ *
+ * Provides a modal dialog for creating and editing contact records.
+ * Uses react-hook-form with Zod validation for form handling.
+ *
+ * @module components/contacts/ContactDialog
+ */
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -16,6 +24,7 @@ import { useCreateContact, useUpdateContact } from '@/hooks/use-contacts'
 import type { ContactListItem } from '@/lib/types'
 import { toast } from 'sonner'
 
+/** Zod validation schema for contact form fields. */
 const contactSchema = z.object({
   first_name: z.string().min(1, 'Vorname ist erforderlich'),
   last_name: z.string().min(1, 'Nachname ist erforderlich'),
@@ -29,14 +38,34 @@ const contactSchema = z.object({
   company_id: z.number().optional().nullable(),
 })
 
+/** Form data type inferred from the contact validation schema. */
 type ContactFormData = z.infer<typeof contactSchema>
 
+/** Props for the ContactDialog component. */
 interface ContactDialogProps {
+  /** Whether the dialog is open. */
   open: boolean
+  /** Callback to handle dialog open/close state changes. */
   onOpenChange: (open: boolean) => void
+  /** Existing contact to edit, or null/undefined for creating a new contact. */
   contact?: ContactListItem | null
 }
 
+/**
+ * Dialog component for creating or editing contacts.
+ *
+ * Supports both create and edit modes:
+ * - When `contact` is provided, operates in edit mode with pre-filled fields
+ * - When `contact` is null/undefined, operates in create mode
+ *
+ * Form fields include: salutation, title, name, email, phone, mobile, position, department.
+ *
+ * @param props - Component props
+ * @param props.open - Whether the dialog is visible
+ * @param props.onOpenChange - Callback when dialog visibility changes
+ * @param props.contact - Optional contact to edit
+ * @returns The contact dialog component
+ */
 export function ContactDialog({ open, onOpenChange, contact }: ContactDialogProps) {
   const createContact = useCreateContact()
   const updateContact = useUpdateContact()

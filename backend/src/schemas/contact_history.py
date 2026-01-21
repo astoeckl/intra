@@ -1,3 +1,9 @@
+"""
+Contact History Schemas.
+
+Pydantic models for contact history API request/response validation.
+"""
+
 from typing import Optional
 from pydantic import Field
 
@@ -6,8 +12,8 @@ from src.models.contact_history import HistoryType
 
 
 class ContactHistoryBase(BaseSchema):
-    """Base contact history schema."""
-    
+    """Base contact history schema with common fields."""
+
     type: HistoryType
     title: str = Field(..., min_length=1, max_length=255)
     content: Optional[str] = None
@@ -15,13 +21,13 @@ class ContactHistoryBase(BaseSchema):
 
 class NoteCreate(BaseSchema):
     """Schema for creating a note."""
-    
+
     content: str = Field(..., min_length=1)
 
 
 class CallCreate(BaseSchema):
     """Schema for documenting a call."""
-    
+
     content: str = Field(..., min_length=1)
     duration_minutes: Optional[int] = None
     outcome: Optional[str] = None  # reached, voicemail, no_answer
@@ -29,14 +35,14 @@ class CallCreate(BaseSchema):
 
 class ContactHistoryUpdate(BaseSchema):
     """Schema for updating a history entry."""
-    
+
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     content: Optional[str] = None
 
 
 class ContactHistoryResponse(ContactHistoryBase, TimestampSchema):
     """Schema for contact history response."""
-    
+
     id: int
     contact_id: int
     created_by: Optional[str] = None

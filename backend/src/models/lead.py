@@ -1,3 +1,10 @@
+"""
+Lead Model.
+
+Represents a sales lead in the CRM pipeline. Leads track potential
+customers from initial contact through qualification and conversion.
+"""
+
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, Text, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,6 +19,13 @@ if TYPE_CHECKING:
 
 
 class LeadStatus(str, enum.Enum):
+    """
+    Sales pipeline status for leads.
+
+    Values progress from cold (new) through warm/hot (engaged)
+    to final states (to_be_done or disqualified).
+    """
+
     COLD = "cold"
     WARM = "warm"
     HOT = "hot"
@@ -20,8 +34,15 @@ class LeadStatus(str, enum.Enum):
 
 
 class Lead(Base, TimestampMixin):
+    """
+    Sales lead model.
+
+    Links a contact to a campaign and tracks their progression
+    through the sales pipeline. UTM parameters capture acquisition source.
+    """
+
     __tablename__ = "leads"
-    
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     status: Mapped[LeadStatus] = mapped_column(
         Enum(LeadStatus, values_callable=lambda x: [e.value for e in x]),
@@ -32,16 +53,16 @@ class Lead(Base, TimestampMixin):
     utm_medium: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     utm_campaign: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    
+
     contact_id: Mapped[int] = mapped_column(
         ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False, index=True
     )
     campaign_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("campaigns.id", ondelete="SET NULL"), nullable=True
     )
-    
+
     contact: Mapped["Contact"] = relationship("Contact", back_populates="leads")
     campaign: Mapped[Optional["Campaign"]] = relationship("Campaign", back_populates="leads")
-    
+
     def __repr__(self) -> str:
         return f"<Lead(id={self.id}, status='{self.status.value}')>"

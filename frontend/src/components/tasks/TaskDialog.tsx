@@ -1,3 +1,11 @@
+/**
+ * Task Dialog Component Module
+ *
+ * Provides a modal dialog for creating and editing tasks with
+ * contact search/linking functionality and priority selection.
+ *
+ * @module components/tasks/TaskDialog
+ */
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,6 +34,7 @@ import { useContactSearch } from '@/hooks/use-contacts'
 import type { TaskListItem, TaskPriority, ContactSearchResult } from '@/lib/types'
 import { toast } from 'sonner'
 
+/** Zod validation schema for task form fields. */
 const taskSchema = z.object({
   title: z.string().min(1, 'Titel ist erforderlich'),
   description: z.string().optional(),
@@ -36,14 +45,34 @@ const taskSchema = z.object({
   contact_id: z.number().optional().nullable(),
 })
 
+/** Form data type inferred from the task validation schema. */
 type TaskFormData = z.infer<typeof taskSchema>
 
+/** Props for the TaskDialog component. */
 interface TaskDialogProps {
+  /** Whether the dialog is open. */
   open: boolean
+  /** Callback to handle dialog open/close state changes. */
   onOpenChange: (open: boolean) => void
+  /** Existing task to edit, or null/undefined for creating a new task. */
   task?: TaskListItem | null
 }
 
+/**
+ * Dialog component for creating or editing tasks.
+ *
+ * Features:
+ * - Title, description, and due date/time fields
+ * - Priority selection (low, medium, high, urgent)
+ * - Contact search with autocomplete to link tasks to contacts
+ * - Assignment to specific team members
+ *
+ * @param props - Component props
+ * @param props.open - Whether the dialog is visible
+ * @param props.onOpenChange - Callback when dialog visibility changes
+ * @param props.task - Optional task to edit
+ * @returns The task dialog component
+ */
 export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()

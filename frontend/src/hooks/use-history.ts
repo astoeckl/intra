@@ -1,7 +1,15 @@
+/**
+ * Contact History React Query Hooks.
+ *
+ * Provides data fetching and mutation hooks for contact timeline
+ * operations (notes, calls, etc.).
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { ContactHistoryItem, ContactHistoryUpdate, PaginatedResponse } from '@/lib/types'
 
+/** Fetch contact interaction history. Disabled when contactId is null. */
 export function useContactHistory(contactId: number | null) {
   return useQuery({
     queryKey: ['contactHistory', contactId],
@@ -16,6 +24,7 @@ export function useContactHistory(contactId: number | null) {
   })
 }
 
+/** Add a note to contact history. */
 export function useAddNote() {
   const queryClient = useQueryClient()
 
@@ -33,6 +42,7 @@ export function useAddNote() {
   })
 }
 
+/** Document a phone call in contact history. */
 export function useAddCall() {
   const queryClient = useQueryClient()
 

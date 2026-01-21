@@ -1,3 +1,11 @@
+/**
+ * Contacts Page Module
+ *
+ * Provides a paginated view of all contacts in the system with search and filtering
+ * capabilities. Supports inline editing via a dialog component.
+ *
+ * @module pages/Contacts
+ */
 import { useState } from 'react'
 import { Plus, Search, Mail, Phone } from 'lucide-react'
 import { useContacts } from '@/hooks/use-contacts'
@@ -10,6 +18,15 @@ import type { ContactListItem } from '@/lib/types'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 
+/**
+ * Contacts page component for managing contact records.
+ *
+ * Displays a searchable, paginated table of contacts with their details including
+ * name, email, phone, company, position, and status. Provides functionality to
+ * create new contacts and edit existing ones via a dialog modal.
+ *
+ * @returns The contacts management page
+ */
 export default function Contacts() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)

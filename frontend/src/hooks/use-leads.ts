@@ -1,3 +1,10 @@
+/**
+ * Lead React Query Hooks.
+ *
+ * Provides data fetching and mutation hooks for lead operations
+ * including bulk import.
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type {
@@ -23,6 +30,7 @@ interface LeadsParams {
   campaign_id?: number
 }
 
+/** Fetch paginated leads with optional status and campaign filters. */
 export function useLeads(params: LeadsParams = {}) {
   return useQuery({
     queryKey: ['leads', params],
@@ -76,6 +84,7 @@ export function useUpdateLead() {
   })
 }
 
+/** Bulk import leads from CSV/Excel file. */
 export function useImportLeads() {
   const queryClient = useQueryClient()
 
@@ -83,7 +92,7 @@ export function useImportLeads() {
     mutationFn: async ({ file, campaign_id }: { file: File; campaign_id?: number }) => {
       const formData = new FormData()
       formData.append('file', file)
-      
+
       const params = campaign_id ? `?campaign_id=${campaign_id}` : ''
       const response = await api.post<LeadImportResult>(`/leads/import${params}`, formData, {
         headers: {

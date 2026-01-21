@@ -1,3 +1,10 @@
+/**
+ * Contact React Query Hooks.
+ *
+ * Provides data fetching, infinite scroll, and mutation hooks
+ * for contact operations.
+ */
+
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type {
@@ -16,6 +23,7 @@ interface ContactsParams {
   is_active?: boolean
 }
 
+/** Fetch paginated contacts with filters. */
 export function useContacts(params: ContactsParams = {}) {
   return useQuery({
     queryKey: ['contacts', params],
@@ -35,9 +43,10 @@ interface InfiniteContactsParams {
   page_size?: number
 }
 
+/** Infinite scroll contact fetching for virtualized lists. */
 export function useInfiniteContacts(params: InfiniteContactsParams = {}) {
   const { page_size = 20, ...filterParams } = params
-  
+
   return useInfiniteQuery({
     queryKey: ['contacts', 'infinite', filterParams],
     queryFn: async ({ pageParam = 1 }) => {
@@ -72,6 +81,7 @@ export function useContact(id: number | null) {
   })
 }
 
+/** Search contacts for autocomplete. Debounced with 30s stale time. */
 export function useContactSearch(query: string) {
   return useQuery({
     queryKey: ['contacts', 'search', query],

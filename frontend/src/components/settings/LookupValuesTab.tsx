@@ -1,3 +1,11 @@
+/**
+ * Lookup Values Tab Component Module
+ *
+ * Provides management interface for configurable dropdown values
+ * used throughout the application (lead status, industries, countries, etc.).
+ *
+ * @module components/settings/LookupValuesTab
+ */
 import { useState } from 'react'
 import {
   useLookupCategories,
@@ -38,6 +46,7 @@ import { toast } from 'sonner'
 import { Loader2, Plus, Pencil, Trash2, RotateCcw } from 'lucide-react'
 import type { LookupValue } from '@/lib/types'
 
+/** Human-readable labels for lookup value categories (German). */
 const CATEGORY_LABELS: Record<string, string> = {
   lead_status: 'Lead Status',
   potential_category: 'Potenzial-Kategorien',
@@ -51,12 +60,27 @@ const CATEGORY_LABELS: Record<string, string> = {
   campaign_source: 'Kampagnen-Quellen',
 }
 
+/** Form data for creating/editing lookup values. */
 interface LookupFormData {
+  /** Internal value stored in the database. */
   value: string
+  /** Display label shown to users. */
   label: string
+  /** Sort order for display in dropdowns. */
   sort_order: number
 }
 
+/**
+ * Lookup values management tab component.
+ *
+ * Provides CRUD operations for configurable dropdown options:
+ * - Category selection to filter values
+ * - Table view of existing values with status badges
+ * - Create/edit dialog for adding or modifying values
+ * - Soft delete (deactivate) and reactivate functionality
+ *
+ * @returns The lookup values tab content
+ */
 export default function LookupValuesTab() {
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [showInactive, setShowInactive] = useState(false)

@@ -1,3 +1,9 @@
+"""
+Email Service.
+
+Business logic for email templates and sending functionality.
+"""
+
 from typing import Optional, Sequence
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,28 +24,32 @@ async def get_templates(
     is_active: Optional[bool] = None,
     category: Optional[str] = None,
 ) -> tuple[Sequence[EmailTemplate], int]:
-    """Get all email templates with pagination."""
+    """
+    Retrieve paginated email templates with optional filtering.
+
+    Returns templates sorted alphabetically by name.
+    """
     query = select(EmailTemplate)
     count_query = select(func.count(EmailTemplate.id))
-    
+
     filters = []
     if is_active is not None:
         filters.append(EmailTemplate.is_active == is_active)
     if category:
         filters.append(EmailTemplate.category == category)
-    
+
     if filters:
         query = query.where(*filters)
         count_query = count_query.where(*filters)
-    
+
     query = query.order_by(EmailTemplate.name).offset(skip).limit(limit)
-    
+
     result = await db.execute(query)
     templates = result.scalars().all()
-    
+
     count_result = await db.execute(count_query)
     total = count_result.scalar() or 0
-    
+
     return templates, total
 
 
@@ -58,7 +68,7 @@ async def create_template(
     data = template_data.model_dump()
     if data.get("variables"):
         data["variables"] = json.dumps(data["variables"])
-    
+
     template = EmailTemplate(**data)
     db.add(template)
     await db.flush()
@@ -73,21 +83,26 @@ async def update_template(
     template = await get_template(db, template_id)
     if not template:
         return None
-    
+
     update_data = template_data.model_dump(exclude_unset=True)
     if "variables" in update_data and update_data["variables"]:
         update_data["variables"] = json.dumps(update_data["variables"])
-    
+
     for field, value in update_data.items():
         setattr(template, field, value)
-    
+
     await db.flush()
     await db.refresh(template)
     return template
 
 
 def _replace_variables(text: str, contact: Contact, company: Optional[Company]) -> str:
-    """Replace template variables with actual values."""
+    """
+    Substitute template placeholders with contact/company data.
+
+    Supports {{contact.*}} and {{company.*}} placeholders.
+    Missing values are replaced with empty strings.
+    """
     replacements = {
         "{{contact.first_name}}": contact.first_name,
         "{{contact.last_name}}": contact.last_name,
@@ -101,29 +116,34 @@ def _replace_variables(text: str, contact: Contact, company: Optional[Company]) 
         "{{company.city}}": company.city if company else "",
         "{{company.website}}": company.website if company else "",
     }
-    
+
     for var, value in replacements.items():
         text = text.replace(var, value)
-    
+
     return text
 
 
 async def preview_email(
     db: AsyncSession, template_id: int, contact_id: int
 ) -> Optional[dict]:
-    """Generate email preview with replaced variables."""
+    """
+    Generate email preview with variable substitution.
+
+    Returns rendered subject, body, and recipient info.
+    Returns None if template or contact not found.
+    """
     from src.services import contact_service
-    
+
     template = await get_template(db, template_id)
     if not template:
         return None
-    
+
     contact = await contact_service.get_contact(db, contact_id)
     if not contact:
         return None
-    
+
     company = contact.company
-    
+
     return {
         "subject": _replace_variables(template.subject, contact, company),
         "body": _replace_variables(template.body, contact, company),
@@ -139,25 +159,32 @@ async def send_email(
     subject_override: Optional[str] = None,
     created_by: Optional[str] = None,
 ) -> bool:
-    """Send an email using a template."""
+    """
+    Send an email using a template with variable substitution.
+
+    Records the email in contact history. SMTP sending is currently
+    stubbed and needs implementation.
+
+    Returns False if template/contact not found or contact has no email.
+    """
     from src.services import contact_service
     from src.core.config import get_settings
-    
+
     # Get template and contact
     template = await get_template(db, template_id)
     if not template:
         return False
-    
+
     contact = await contact_service.get_contact(db, contact_id)
     if not contact or not contact.email:
         return False
-    
+
     company = contact.company
-    
+
     # Replace variables
     subject = subject_override or _replace_variables(template.subject, contact, company)
     body = _replace_variables(template.body, contact, company)
-    
+
     # TODO: Actually send email via SMTP
     # settings = get_settings()
     # async with aiosmtplib.SMTP(hostname=settings.smtp_host, port=settings.smtp_port) as smtp:
@@ -167,10 +194,10 @@ async def send_email(
     #     message["From"] = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
     #     message["To"] = contact.email
     #     await smtp.send_message(message)
-    
+
     # Log to history
     await history_service.add_email_sent(
         db, contact_id, subject, template.name, created_by
     )
-    
+
     return True

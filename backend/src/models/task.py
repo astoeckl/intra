@@ -1,3 +1,10 @@
+"""
+Task Model.
+
+Represents a to-do item that may be assigned to a user and/or
+associated with a contact.
+"""
+
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
 from sqlalchemy import String, Text, ForeignKey, Enum, DateTime
@@ -12,7 +19,13 @@ if TYPE_CHECKING:
 
 
 class TaskStatus(str, enum.Enum):
-    """Task status enum."""
+    """
+    Task workflow status.
+
+    Progression: open -> in_progress -> completed/cancelled.
+    Deferred indicates temporarily postponed.
+    """
+
     OPEN = "open"
     IN_PROGRESS = "in_progress"
     DEFERRED = "deferred"
@@ -21,7 +34,8 @@ class TaskStatus(str, enum.Enum):
 
 
 class TaskPriority(str, enum.Enum):
-    """Task priority enum."""
+    """Task priority levels for sorting and display."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -29,7 +43,12 @@ class TaskPriority(str, enum.Enum):
 
 
 class Task(Base, TimestampMixin):
-    """Task/Aufgabe model."""
+    """
+    Task/to-do model.
+
+    Supports assignment to users, association with contacts, and
+    self-referential follow-up task chains via parent_task_id.
+    """
 
     __tablename__ = "tasks"
 

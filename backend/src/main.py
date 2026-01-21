@@ -1,3 +1,10 @@
+"""
+FastAPI Application Entry Point.
+
+Configures the CRM/Intranet application including CORS middleware,
+API routes, and database initialization on startup.
+"""
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,7 +22,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
     await init_db()
-    
+
     # Seed default lookup values
     async with async_session_maker() as session:
         try:
@@ -27,7 +34,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             print(f"Error seeding lookup values: {e}")
             await session.rollback()
-    
+
     yield
     # Shutdown
 

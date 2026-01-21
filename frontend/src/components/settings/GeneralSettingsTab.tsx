@@ -1,3 +1,11 @@
+/**
+ * General Settings Tab Component Module
+ *
+ * Provides the general application settings interface including
+ * app name, timezone, date format, and language preferences.
+ *
+ * @module components/settings/GeneralSettingsTab
+ */
 import { useState, useEffect } from 'react'
 import { useSettings, useUpdateSetting, useCreateSetting } from '@/hooks/use-settings'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,6 +22,7 @@ import {
 import { toast } from 'sonner'
 import { Loader2, Save, Info } from 'lucide-react'
 
+/** Available timezone options for the application. */
 const TIMEZONES = [
   { value: 'Europe/Vienna', label: 'Wien (Europe/Vienna)' },
   { value: 'Europe/Berlin', label: 'Berlin (Europe/Berlin)' },
@@ -21,17 +30,20 @@ const TIMEZONES = [
   { value: 'UTC', label: 'UTC' },
 ]
 
+/** Available date format options for display throughout the application. */
 const DATE_FORMATS = [
   { value: 'DD.MM.YYYY', label: 'DD.MM.YYYY (31.12.2026)' },
   { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD (2026-12-31)' },
   { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY (12/31/2026)' },
 ]
 
+/** Available language options for the application interface. */
 const LANGUAGES = [
   { value: 'de', label: 'Deutsch' },
   { value: 'en', label: 'English' },
 ]
 
+/** Local state interface for general application settings. */
 interface GeneralSettings {
   appName: string
   timezone: string
@@ -39,11 +51,24 @@ interface GeneralSettings {
   language: string
 }
 
+/**
+ * General settings tab component for basic application configuration.
+ *
+ * Manages settings including:
+ * - Application name (displayed in navigation and emails)
+ * - Timezone for date/time display
+ * - Date format preference
+ * - UI language
+ *
+ * Also displays read-only system information (version, environment, API URL, database).
+ *
+ * @returns The general settings tab content
+ */
 export default function GeneralSettingsTab() {
   const { data: settings, isLoading } = useSettings('general')
   const updateSetting = useUpdateSetting()
   const createSetting = useCreateSetting()
-  
+
   const [localSettings, setLocalSettings] = useState<GeneralSettings>({
     appName: 'Atikon CRM',
     timezone: 'Europe/Vienna',

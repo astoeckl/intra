@@ -1,4 +1,11 @@
-// Common types
+/**
+ * TypeScript Type Definitions.
+ *
+ * Shared types for API responses and component props.
+ * Keep in sync with backend Pydantic schemas.
+ */
+
+/** Generic wrapper for paginated API responses. */
 export interface PaginatedResponse<T> {
   items: T[]
   total: number

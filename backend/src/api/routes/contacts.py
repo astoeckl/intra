@@ -1,3 +1,10 @@
+"""
+Contact API Routes.
+
+Provides CRUD operations for contacts including search functionality.
+Contacts represent individual people associated with companies.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +32,19 @@ async def list_contacts(
     is_active: bool = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all contacts with pagination and filters."""
+    """
+    List contacts with pagination and filters.
+
+    Args:
+        page: Page number (1-indexed).
+        page_size: Items per page (max 100).
+        search: Filter by name or email (partial match).
+        company_id: Filter by associated company.
+        is_active: Filter by active status.
+
+    Returns:
+        Paginated list of contacts sorted alphabetically.
+    """
     skip = (page - 1) * page_size
     contacts, total = await contact_service.get_contacts(
         db,
@@ -35,7 +54,7 @@ async def list_contacts(
         company_id=company_id,
         is_active=is_active,
     )
-    
+
     items = []
     for contact in contacts:
         item = ContactListResponse(
@@ -52,7 +71,7 @@ async def list_contacts(
             updated_at=contact.updated_at,
         )
         items.append(item)
-    
+
     return PaginatedResponse(
         items=items,
         total=total,
@@ -68,7 +87,18 @@ async def search_contacts(
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ):
-    """Search contacts for autocomplete. Target: <200ms response time."""
+    """
+    Search contacts for autocomplete suggestions.
+
+    Optimized endpoint for typeahead search. Target response time: <200ms.
+
+    Args:
+        q: Search query (min 2 characters). Matches name, email, or company.
+        limit: Maximum results to return (max 50).
+
+    Returns:
+        List of matching contacts with minimal fields for display.
+    """
     return await contact_service.search_contacts(db, q, limit)
 
 
@@ -77,16 +107,24 @@ async def get_contact(
     contact_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single contact by ID."""
+    """
+    Retrieve a single contact with full details.
+
+    Returns:
+        Contact with company info and associated leads summary.
+
+    Raises:
+        HTTPException 404: Contact does not exist.
+    """
     contact = await contact_service.get_contact(db, contact_id)
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    
+
     leads = [
         LeadSummary(id=lead.id, status=lead.status, source=lead.source)
         for lead in contact.leads
     ]
-    
+
     return ContactResponse(
         id=contact.id,
         first_name=contact.first_name,
@@ -115,10 +153,18 @@ async def create_contact(
     contact_data: ContactCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new contact."""
+    """
+    Create a new contact.
+
+    Args:
+        contact_data: Contact details. company_id is optional.
+
+    Returns:
+        Created contact with company relationship loaded.
+    """
     contact = await contact_service.create_contact(db, contact_data)
     await db.refresh(contact, ["company"])
-    
+
     return ContactResponse(
         id=contact.id,
         first_name=contact.first_name,
@@ -147,11 +193,23 @@ async def update_contact(
     contact_data: ContactUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update an existing contact."""
+    """
+    Update an existing contact.
+
+    Args:
+        contact_id: Contact identifier.
+        contact_data: Fields to update. Only provided fields are modified.
+
+    Returns:
+        Updated contact.
+
+    Raises:
+        HTTPException 404: Contact does not exist.
+    """
     contact = await contact_service.update_contact(db, contact_id, contact_data)
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    
+
     return ContactResponse(
         id=contact.id,
         first_name=contact.first_name,
@@ -179,7 +237,14 @@ async def delete_contact(
     contact_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Soft delete a contact (set is_active=False)."""
+    """
+    Soft delete a contact by setting is_active=False.
+
+    Contact data is preserved for historical reference.
+
+    Raises:
+        HTTPException 404: Contact does not exist.
+    """
     deleted = await contact_service.delete_contact(db, contact_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Contact not found")

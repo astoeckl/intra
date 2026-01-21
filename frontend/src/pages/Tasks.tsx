@@ -1,3 +1,10 @@
+/**
+ * Tasks Page Component.
+ *
+ * Task management interface with filtering, inline status updates,
+ * task completion workflow, and follow-up task creation.
+ */
+
 import { useState } from 'react'
 import { Plus, Filter, Clock, AlertTriangle, CheckCircle2, PauseCircle, Pencil, Trash2 } from 'lucide-react'
 import { useTasks, useUpdateTask, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks'

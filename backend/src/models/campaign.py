@@ -1,3 +1,9 @@
+"""
+Campaign Model.
+
+Represents a marketing campaign for lead generation and tracking.
+"""
+
 from typing import TYPE_CHECKING, Optional
 from datetime import date
 from sqlalchemy import String, Text, Date, Boolean
@@ -11,10 +17,16 @@ if TYPE_CHECKING:
 
 
 class Campaign(Base, TimestampMixin):
-    """Campaign/Kampagne model."""
-    
+    """
+    Marketing campaign model.
+
+    Campaigns group leads by acquisition channel (social media, email,
+    landing pages). Optional lead magnets can be configured for automatic
+    delivery on form submission.
+    """
+
     __tablename__ = "campaigns"
-    
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -25,11 +37,11 @@ class Campaign(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     landing_page_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     lead_magnet: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # File/resource name
-    
+
     # Relationships
     leads: Mapped[list["Lead"]] = relationship(
         "Lead", back_populates="campaign"
     )
-    
+
     def __repr__(self) -> str:
         return f"<Campaign(id={self.id}, name='{self.name}')>"

@@ -1,3 +1,11 @@
+/**
+ * Main Application Component
+ *
+ * Configures React Router with the application's route hierarchy.
+ * All main pages are rendered within the Layout component shell.
+ *
+ * @module App
+ */
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import Layout from '@/components/layout/Layout'
@@ -8,6 +16,21 @@ import Tasks from '@/pages/Tasks'
 import Callcenter from '@/pages/Callcenter'
 import Settings from '@/pages/Settings'
 
+/**
+ * Root application component with routing configuration.
+ *
+ * Route structure:
+ * - `/` - Dashboard (index route)
+ * - `/callcenter` - Call center workspace
+ * - `/contacts` - Contact management
+ * - `/leads` - Lead management
+ * - `/tasks` - Task management
+ * - `/settings` - Application settings
+ *
+ * Includes a global toast notification container positioned at top-right.
+ *
+ * @returns The root application with router and toast notifications
+ */
 function App() {
   return (
     <BrowserRouter>

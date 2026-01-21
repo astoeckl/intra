@@ -1,3 +1,9 @@
+"""
+Contact Model.
+
+Represents an individual person in the CRM system.
+"""
+
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, Text, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,10 +19,16 @@ if TYPE_CHECKING:
 
 
 class Contact(Base, TimestampMixin):
-    """Contact/Kontakt model."""
-    
+    """
+    Contact/person model.
+
+    Represents an individual that may be associated with a company.
+    Contacts can have multiple leads and tasks. Soft deletion via
+    is_active preserves historical data.
+    """
+
     __tablename__ = "contacts"
-    
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -30,12 +42,12 @@ class Contact(Base, TimestampMixin):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    
+
     # Foreign Keys
     company_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("companies.id", ondelete="SET NULL"), nullable=True
     )
-    
+
     # Relationships
     company: Mapped[Optional["Company"]] = relationship(
         "Company", back_populates="contacts"
@@ -49,7 +61,7 @@ class Contact(Base, TimestampMixin):
     history: Mapped[list["ContactHistory"]] = relationship(
         "ContactHistory", back_populates="contact", cascade="all, delete-orphan"
     )
-    
+
     @property
     def full_name(self) -> str:
         """Return full name with optional title."""
@@ -58,6 +70,6 @@ class Contact(Base, TimestampMixin):
             parts.append(self.title)
         parts.extend([self.first_name, self.last_name])
         return " ".join(parts)
-    
+
     def __repr__(self) -> str:
         return f"<Contact(id={self.id}, name='{self.full_name}')>"

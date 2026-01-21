@@ -1,3 +1,9 @@
+"""
+Company Model.
+
+Represents a business entity in the CRM.
+"""
+
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -10,10 +16,15 @@ if TYPE_CHECKING:
 
 
 class Company(Base, TimestampMixin):
-    """Company/Firma model."""
-    
+    """
+    Company/organization model.
+
+    Groups contacts under a common business entity. Includes potential
+    categorization (A-D) for sales prioritization and industry classification.
+    """
+
     __tablename__ = "companies"
-    
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     street: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -29,11 +40,11 @@ class Company(Base, TimestampMixin):
     )  # A, B, C, D
     industry: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    
+
     # Relationships
     contacts: Mapped[list["Contact"]] = relationship(
         "Contact", back_populates="company", cascade="all, delete-orphan"
     )
-    
+
     def __repr__(self) -> str:
         return f"<Company(id={self.id}, name='{self.name}')>"

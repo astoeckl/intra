@@ -1,3 +1,12 @@
+/**
+ * Callcenter Page Module
+ *
+ * Provides a comprehensive call center interface for managing customer contacts,
+ * documenting interactions, and tracking tasks. Features a three-column layout
+ * with contact list, contact details/timeline, and quick actions.
+ *
+ * @module pages/Callcenter
+ */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Search,
@@ -50,6 +59,7 @@ import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 
+/** Human-readable labels for history entry types (German). */
 const historyTypeLabels: Record<HistoryType, string> = {
   note: 'Notiz',
   call: 'Anruf',
@@ -61,6 +71,7 @@ const historyTypeLabels: Record<HistoryType, string> = {
   lead_created: 'Lead',
 }
 
+/** Icon components mapped to each history entry type. */
 const historyTypeIcons: Record<HistoryType, React.ElementType> = {
   note: MessageSquare,
   call: Phone,
@@ -72,6 +83,7 @@ const historyTypeIcons: Record<HistoryType, React.ElementType> = {
   lead_created: Target,
 }
 
+/** Human-readable labels for lead status values (German). */
 const leadStatusLabels: Record<LeadStatus, string> = {
   new: 'Neu',
   contacted: 'Kontaktiert',
@@ -80,6 +92,7 @@ const leadStatusLabels: Record<LeadStatus, string> = {
   disqualified: 'Disqualifiziert',
 }
 
+/** CSS color classes for lead status badges. */
 const leadStatusColors: Record<LeadStatus, string> = {
   new: 'bg-blue-100 text-blue-800',
   contacted: 'bg-yellow-100 text-yellow-800',
@@ -88,6 +101,7 @@ const leadStatusColors: Record<LeadStatus, string> = {
   disqualified: 'bg-red-100 text-red-800',
 }
 
+/** CSS color classes for company potential category badges (A-D rating). */
 const potentialCategoryColors: Record<string, string> = {
   A: 'bg-emerald-500 text-white',
   B: 'bg-blue-500 text-white',
@@ -95,6 +109,7 @@ const potentialCategoryColors: Record<string, string> = {
   D: 'bg-gray-500 text-white',
 }
 
+/** Human-readable labels for task priority levels (German). */
 const priorityLabels: Record<TaskPriority, string> = {
   low: 'Niedrig',
   medium: 'Mittel',
@@ -102,6 +117,7 @@ const priorityLabels: Record<TaskPriority, string> = {
   urgent: 'Dringend',
 }
 
+/** CSS color classes for task priority badges. */
 const priorityColors: Record<TaskPriority, string> = {
   low: 'bg-gray-100 text-gray-700',
   medium: 'bg-blue-100 text-blue-700',
@@ -109,7 +125,17 @@ const priorityColors: Record<TaskPriority, string> = {
   urgent: 'bg-red-100 text-red-700',
 }
 
-// Custom hook for debouncing
+/**
+ * Custom hook for debouncing a value.
+ *
+ * Delays updating the returned value until after the specified delay has passed
+ * since the last change, useful for reducing API calls during rapid input changes.
+ *
+ * @typeParam T - The type of value being debounced
+ * @param value - The value to debounce
+ * @param delay - The delay in milliseconds before updating
+ * @returns The debounced value
+ */
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
@@ -126,6 +152,22 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
+/**
+ * Callcenter page component for customer interaction management.
+ *
+ * Features a three-column layout:
+ * - Left: Searchable contact list with infinite scroll
+ * - Center: Selected contact details with timeline/history view
+ * - Right: Quick actions (add note, document call, create task, send email) and open tasks
+ *
+ * Supports:
+ * - Adding notes and documenting calls
+ * - Creating and completing tasks with optional follow-ups
+ * - Sending emails via templates with variable substitution
+ * - Editing and deleting history entries
+ *
+ * @returns The callcenter management page
+ */
 export default function Callcenter() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null)
@@ -181,7 +223,7 @@ export default function Callcenter() {
 
   // Infinite scroll observer
   const loadMoreRef = useRef<HTMLDivElement>(null)
-  
+
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries
@@ -224,7 +266,7 @@ export default function Callcenter() {
 
   const handleAddNote = async () => {
     if (!selectedContactId || !noteContent.trim()) return
-    
+
     try {
       await addNote.mutateAsync({ contactId: selectedContactId, content: noteContent })
       toast.success('Notiz wurde hinzugefügt')
@@ -237,7 +279,7 @@ export default function Callcenter() {
 
   const handleAddCall = async () => {
     if (!selectedContactId || !callContent.trim()) return
-    
+
     try {
       await addCall.mutateAsync({ contactId: selectedContactId, content: callContent })
       toast.success('Anruf wurde dokumentiert')
@@ -250,7 +292,7 @@ export default function Callcenter() {
 
   const handleCreateTask = async () => {
     if (!selectedContactId || !taskTitle.trim()) return
-    
+
     try {
       await createTask.mutateAsync({
         title: taskTitle,
@@ -273,9 +315,9 @@ export default function Callcenter() {
   const handleSelectTemplate = async (templateId: string) => {
     const id = parseInt(templateId)
     setSelectedTemplateId(id)
-    
+
     if (!selectedContactId) return
-    
+
     try {
       const preview = await emailPreview.mutateAsync({
         template_id: id,
@@ -293,11 +335,11 @@ export default function Callcenter() {
       toast.error('Kontakt hat keine E-Mail-Adresse')
       return
     }
-    
+
     // Use mailto: link as a simple solution
     const mailtoLink = `mailto:${contact.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
     window.open(mailtoLink, '_blank')
-    
+
     // If a template was used, also log it to the backend
     if (selectedTemplateId) {
       try {
@@ -310,7 +352,7 @@ export default function Callcenter() {
         // Silent fail for logging - email was already sent via mailto
       }
     }
-    
+
     toast.success('E-Mail-Client wurde geöffnet')
     setIsEmailDialogOpen(false)
     setSelectedTemplateId(null)
@@ -981,8 +1023,8 @@ export default function Callcenter() {
             <Button variant="outline" onClick={() => setIsEditHistoryDialogOpen(false)}>
               Abbrechen
             </Button>
-            <Button 
-              onClick={handleUpdateHistoryEntry} 
+            <Button
+              onClick={handleUpdateHistoryEntry}
               disabled={!editHistoryTitle.trim() || updateHistoryEntry.isPending}
             >
               Speichern
@@ -1012,8 +1054,8 @@ export default function Callcenter() {
             <Button variant="outline" onClick={() => setIsDeleteHistoryDialogOpen(false)}>
               Abbrechen
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDeleteHistoryEntry}
               disabled={deleteHistoryEntry.isPending}
             >
@@ -1103,7 +1145,7 @@ export default function Callcenter() {
             <Button variant="outline" onClick={() => setIsCompleteTaskDialogOpen(false)}>
               Abbrechen
             </Button>
-            <Button 
+            <Button
               onClick={handleCompleteTask}
               disabled={completeTask.isPending || (createFollowUp && !followUpTitle.trim())}
             >

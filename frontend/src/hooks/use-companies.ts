@@ -1,3 +1,9 @@
+/**
+ * Company React Query Hooks.
+ *
+ * Provides data fetching and mutation hooks for company operations.
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { Company, CompanyCreate, PaginatedResponse } from '@/lib/types'
@@ -8,6 +14,7 @@ interface CompaniesParams {
   search?: string
 }
 
+/** Fetch paginated companies with optional search filter. */
 export function useCompanies(params: CompaniesParams = {}) {
   return useQuery({
     queryKey: ['companies', params],
@@ -20,6 +27,7 @@ export function useCompanies(params: CompaniesParams = {}) {
   })
 }
 
+/** Fetch a single company by ID. Disabled when id is null. */
 export function useCompany(id: number | null) {
   return useQuery({
     queryKey: ['company', id],
@@ -32,6 +40,7 @@ export function useCompany(id: number | null) {
   })
 }
 
+/** Create a new company. Invalidates companies list on success. */
 export function useCreateCompany() {
   const queryClient = useQueryClient()
 
@@ -46,6 +55,7 @@ export function useCreateCompany() {
   })
 }
 
+/** Update an existing company. Invalidates both list and detail queries. */
 export function useUpdateCompany() {
   const queryClient = useQueryClient()
 
@@ -61,6 +71,7 @@ export function useUpdateCompany() {
   })
 }
 
+/** Delete a company. Invalidates companies list on success. */
 export function useDeleteCompany() {
   const queryClient = useQueryClient()
 

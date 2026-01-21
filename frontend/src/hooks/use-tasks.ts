@@ -1,3 +1,10 @@
+/**
+ * Task React Query Hooks.
+ *
+ * Provides data fetching and mutation hooks for task operations
+ * including task completion workflow.
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type {
@@ -19,6 +26,7 @@ interface TasksParams {
   is_overdue?: boolean
 }
 
+/** Fetch paginated tasks with comprehensive filtering options. */
 export function useTasks(params: TasksParams = {}) {
   return useQuery({
     queryKey: ['tasks', params],
@@ -31,6 +39,7 @@ export function useTasks(params: TasksParams = {}) {
   })
 }
 
+/** Fetch tasks assigned to current user. */
 export function useMyTasks(page = 1, pageSize = 20) {
   return useQuery({
     queryKey: ['tasks', 'my', page, pageSize],
@@ -92,6 +101,7 @@ interface CompleteTaskData {
   follow_up_priority?: 'low' | 'medium' | 'high' | 'urgent'
 }
 
+/** Complete a task with optional follow-up task creation. */
 export function useCompleteTask() {
   const queryClient = useQueryClient()
 
