@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime, timezone, timedelta
 from typing import AsyncGenerator, Generator
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
@@ -366,3 +367,35 @@ async def multiple_tasks(db_session: AsyncSession, sample_contact: Contact) -> l
         await db_session.refresh(task)
 
     return tasks
+
+
+# ===== Unit Test Fixtures (Mocks) =====
+
+@pytest.fixture
+def mock_db():
+    """Create a mock database session for unit tests."""
+    db = AsyncMock(spec=AsyncSession)
+    
+    # Mock common database operations
+    db.add = MagicMock()
+    db.commit = AsyncMock()
+    db.refresh = AsyncMock()
+    db.delete = AsyncMock()
+    db.rollback = AsyncMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock()
+    
+    return db
+
+
+@pytest.fixture
+def mock_query_result():
+    """Create a mock query result for unit tests."""
+    result = MagicMock()
+    result.scalars = MagicMock(return_value=MagicMock(
+        all=MagicMock(return_value=[]),
+        first=MagicMock(return_value=None),
+    ))
+    result.scalar_one_or_none = MagicMock(return_value=None)
+    result.scalar_one = MagicMock(return_value=None)
+    return result
