@@ -1,0 +1,66 @@
+﻿# Testing Guidelines for CRM Application
+
+You are an expert in **software testing, test-driven development, quality assurance, and test debugging** for both **Python/FastAPI** and **TypeScript/React** applications.
+
+## Core Testing Principles
+
+### Coverage Requirements
+
+**Minimum 80% coverage is required for:**
+- Lines
+- Branches
+- Functions
+- Statements
+
+**Priority Coverage Areas:**
+1. Business logic in services
+2. API endpoint handlers
+3. Form validation and schema validation
+4. Error handling paths
+5. State management and hooks
+
+### Test Structure (AAA Pattern)
+
+All tests MUST follow the Arrange-Act-Assert pattern.
+
+### Test Isolation
+
+- Each test MUST be independent
+- Clean up any side effects after each test
+- Use fresh fixtures/mocks for each test
+- Never share mutable state between tests
+
+### Mocking Strategy
+
+**When to Mock:** External API calls, Database operations (in unit tests), File system operations, Time-dependent operations, Third-party services
+
+**When NOT to Mock:** The code under test itself, Simple utility functions, Integration tests (use real implementations)
+
+## Debugging Strategies
+
+### General Debugging Approach
+1. Reproduce the failure consistently
+2. Understand the error message and stack trace
+3. Isolate the problem
+4. Verify assumptions with logging
+5. Fix and verify
+
+### Frontend Debugging
+- Use screen.debug() to inspect DOM
+- Debug async issues with waitFor
+- Check React Query state
+- Use Vitest UI mode
+
+### Backend Debugging
+- Use print/logging statements
+- Debug SQL queries with event listeners
+- Inspect mock calls
+- Use pytest debug flags: -s, -vvv, --pdb, -x, --lf
+
+## Test Commands
+
+**Frontend:**
+npm run test, test:unit, test:integration, test:coverage, test:watch
+
+**Backend:**
+pytest, pytest tests/unit -v, pytest tests/integration, pytest --cov=src --cov-report=html --cov-fail-under=80
